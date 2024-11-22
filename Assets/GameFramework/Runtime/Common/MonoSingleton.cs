@@ -13,7 +13,7 @@ namespace GameFramework
             {
                 if (instance == null)
                 {
-                    Debug.LogError(typeof(T).Name + " is Null");
+                    Debug.LogError(typeof(T).Name + " is Null, MonoBehaviour need a GameObject!");
                 }
                 return instance;
             }

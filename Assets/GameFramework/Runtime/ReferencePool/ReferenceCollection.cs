@@ -11,54 +11,43 @@ namespace GameFramework
         private Type referenceType;
 
         public int CurUsingRefCount { get; private set; }
-        public int AcquireRefCount { get; private set; }
-        public int ReleaseRefCount { get; private set; }
-        public int AddRefCount { get; private set; }
-        public int RemoveRefCount { get; private set; }
 
+        public int ReferencesCount { get { return references.Count; }}
 
         private static object locker = new object();
 
         public ReferenceCollection(Type type)
         {
             referenceType = type;
-
             CurUsingRefCount = 0;
-            AcquireRefCount = 0;
-            ReleaseRefCount = 0;
-            AddRefCount = 0;
-            RemoveRefCount = 0;
         }
 
         public T Acquire<T>() where T : IReference, new()
         {
-            T t = default(T);
-
             if (typeof(T) != referenceType)
             {
-               Debug.LogError($"请求类型错误:{typeof(T).Name}");
-
-               return default(T);
+                throw new Exception("请求类型错误:" + typeof(T).Name);
             }
-
-
             CurUsingRefCount++;
-            AcquireRefCount++;
 
-            lock (locker)
+            T value = default(T);
+
+            lock (references)
             {
                 if (references.Count > 0)
                 {
-                    t = (T)references.Dequeue();
+                    value = (T)references.Dequeue();
                 }
-
-                AddRefCount++;
-
-                t = new T();
-                t.OnAcquire();
-
-                return t;
             }
+
+            if (value == null)
+            {
+                value = new T();
+            }
+
+            value.OnAcquire();
+
+            return value;
         }
 
         public void Release(IReference reference)
@@ -74,7 +63,6 @@ namespace GameFramework
                 references.Enqueue(reference);
             }
             CurUsingRefCount--;
-            ReleaseRefCount++;
         }
 
         public void Add<T>(int count) where T : IReference, new()
@@ -87,7 +75,6 @@ namespace GameFramework
             }
             lock (locker)
             {
-                AddRefCount += count;
                 while (count-- > 0)
                 {
                     references.Enqueue(new T());
@@ -103,9 +90,6 @@ namespace GameFramework
                 {
                     count = references.Count;
                 }
-
-                RemoveRefCount += count;
-
                 while (count-- > 0)
                 {
                     references.Dequeue();
@@ -117,7 +101,6 @@ namespace GameFramework
         {
             lock (locker)
             {
-                RemoveRefCount += references.Count;
                 references.Clear();
             }
         }

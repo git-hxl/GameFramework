@@ -34,7 +34,10 @@ namespace GameFramework.Editor
         {
             if (File.Exists(excelPath))
             {
-                File.Delete(excelPath);
+                Debug.LogError("文件已存在");
+                return;
+
+                //File.Delete(excelPath);
             }
 
             DataTable initTable = new DataTable();
