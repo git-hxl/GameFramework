@@ -109,9 +109,16 @@ namespace GameFramework.Editor
                 string curScriptStr = File.ReadAllText(filePath);
 
                 string startTag = "\t#region 脚本工具生成的代码\r\n";
-                string endTag = "\t#endregion\r\n";
+                string endTag = "    #endregion\r\n";
                 int startIndex = curScriptStr.IndexOf(startTag);
                 int endIndex = curScriptStr.IndexOf(endTag);
+
+                if (startIndex == -1 || endIndex == -1)
+                {
+                    Debug.LogError("生成脚本失败");
+                    return;
+                }
+
                 string replaceStr = curScriptStr.Substring(startIndex + startTag.Length, endIndex - startIndex - startTag.Length);
 
                 curScriptStr = curScriptStr.Replace(replaceStr, CreatVariables(root));
