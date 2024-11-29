@@ -24,7 +24,7 @@ namespace GameFramework.Editor
             RectTransform
         }
 
-        private const string EditorToolName = "Assets/UI Éú³ÉUIPanel.cs";
+        private const string EditorToolName = "Assets/UI ç”ŸæˆUIPanel.cs";
         private const char tag = '_';
 
         private static string GetVarName(string typeName)
@@ -79,7 +79,7 @@ namespace GameFramework.Editor
 
             string filePath = $"./{directory}/{scriptName}.cs";
 
-            Debug.Log("Éú³É½Å±¾Â·¾¶£º" + filePath);
+            Debug.Log("ç”Ÿæˆè„šæœ¬è·¯å¾„ï¼š" + filePath);
 
             StringBuilder scriptStr = new StringBuilder();
 
@@ -94,7 +94,7 @@ namespace GameFramework.Editor
 
             if (File.Exists(filePath))
             {
-                if (EditorUtility.DisplayDialog("Éú³ÉUI½Å±¾", "ÒÑ´æÔÚÍ¬ÃûÀà,ÊÇ·ñ¸²¸Ç×Ô¶¯Éú³É²¿·Ö£¿", "È·¶¨", "È¡Ïû"))
+                if (EditorUtility.DisplayDialog("ç”ŸæˆUIè„šæœ¬", "å·²å­˜åœ¨åŒåç±»,æ˜¯å¦è¦†ç›–è‡ªåŠ¨ç”Ÿæˆéƒ¨åˆ†ï¼Ÿ", "ç¡®å®š", "å–æ¶ˆ"))
                 {
                     overrideFile = true;
                 }
@@ -108,14 +108,14 @@ namespace GameFramework.Editor
             {
                 string curScriptStr = File.ReadAllText(filePath);
 
-                string startTag = "\t#region ½Å±¾¹¤¾ßÉú³ÉµÄ´úÂë\r\n";
-                string endTag = "    #endregion\r\n";
+                string startTag = "\t#region è„šæœ¬å·¥å…·ç”Ÿæˆçš„ä»£ç \r\n";
+                string endTag = "\t#endregion\r\n";
                 int startIndex = curScriptStr.IndexOf(startTag);
                 int endIndex = curScriptStr.IndexOf(endTag);
 
                 if (startIndex == -1 || endIndex == -1)
                 {
-                    Debug.LogError("Éú³É½Å±¾Ê§°Ü");
+                    Debug.LogError("ç”Ÿæˆè„šæœ¬å¤±è´¥");
                     return;
                 }
 
@@ -136,7 +136,7 @@ namespace GameFramework.Editor
                 scriptStr.Append("public class " + scriptName + " : MonoBehaviour\r\n");
                 scriptStr.Append("{\r\n");
 
-                scriptStr.Append("\t#region ½Å±¾¹¤¾ßÉú³ÉµÄ´úÂë\r\n");
+                scriptStr.Append("\t#region è„šæœ¬å·¥å…·ç”Ÿæˆçš„ä»£ç \r\n");
 
                 scriptStr.Append(CreatVariables(root));
 
@@ -155,7 +155,7 @@ namespace GameFramework.Editor
         }
 
         /// <summary>
-        /// ´´½¨±äÁ¿
+        /// åˆ›å»ºå˜é‡
         /// </summary>
         /// <param name="obj"></param>
         public static string CreatVariables(GameObject obj)
@@ -180,6 +180,7 @@ namespace GameFramework.Editor
 
                         string path = PathUtil.GetRouteNoRoot(component.transform);
 
+                        varName = "@" + varName;
                         scriptStr.Append($"\tprivate {typeName} {varName};\r\n");
 
                         scriptStr.Append($"\tpublic {typeName} {attrName} {{ get {{ if ({varName} == null) {{ {varName} = transform.Find(\"{path}\").GetComponent<{typeName}>(); }} return {varName}; }} }} \r\n");
