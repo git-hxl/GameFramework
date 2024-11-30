@@ -50,6 +50,10 @@ namespace GameFramework
 
             player.name = joinRoomResponse.PlayerID.ToString();
 
+            SyncTransform syncTransform = player.GetComponent<SyncTransform>();
+
+            syncTransform.Init(joinRoomResponse.PlayerID);
+
             //robots.Add(joinRoomResponse.PlayerID, player);
         }
 
@@ -82,7 +86,7 @@ namespace GameFramework
 
         public void OnSyncEvent(SyncEventRequest syncEventRequest)
         {
-            Debug.Log("OnSyncEvent");
+           // Debug.Log("OnSyncEvent");
 
             switch ((EventCode)syncEventRequest.EventID)
             {
@@ -95,9 +99,7 @@ namespace GameFramework
                         GameObject robot = robots[syncEventRequest.PlayerID];
 
                         SyncTransform syncTransform = robot.GetComponent<SyncTransform>();
-                        syncTransform.IsRemote = true;
-
-                        syncTransform.EnqueueRemoteData(syncTransformData);
+                        syncTransform.OnReceiveRemoteData(syncEventRequest.Timestamp, syncTransformData);
 
                     }
                     else
@@ -106,12 +108,10 @@ namespace GameFramework
                         GameObject robot = ObjectPoolManager.Instance.Acquire("Robot");
 
                         SyncTransform syncTransform = robot.GetComponent<SyncTransform>();
-
-                        syncTransform.IsRemote = true;
-
                         robot.name = syncEventRequest.PlayerID.ToString();
-
                         robots.Add(syncEventRequest.PlayerID, robot);
+
+                        syncTransform.OnReceiveRemoteData(syncEventRequest.Timestamp, syncTransformData);
                     }
                     break;
             }
@@ -140,7 +140,7 @@ namespace GameFramework
             BtJoinRoom.onClick.AddListener(() =>
             {
                 JoinRoomRequest joinRoomRequest = new JoinRoomRequest();
-                joinRoomRequest.PlayerID = NetManager.Instance.ID;
+                joinRoomRequest.PlayerID = NetManager.Instance.PlayerID;
                 int roomID = int.Parse(inputFieldRoomID.text);
                 joinRoomRequest.RoomID = roomID;
                 byte[] data = MessagePackSerializer.Serialize(joinRoomRequest);

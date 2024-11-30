@@ -6,6 +6,7 @@ using LiteNetLib;
 using GameServer.Protocol;
 using GameServer;
 using LiteNetLib.Utils;
+using System;
 
 namespace GameFramework
 {
@@ -15,7 +16,7 @@ namespace GameFramework
         private EventBasedNetListener listener;
         private NetPeer server;
 
-        public int ID;
+        public int PlayerID;
         protected override void OnDispose()
         {
             //throw new System.NotImplementedException();
@@ -89,10 +90,12 @@ namespace GameFramework
             }
 
             SyncEventRequest syncEventRequest = new SyncEventRequest();
-            syncEventRequest.PlayerID = ID;
+            syncEventRequest.PlayerID = PlayerID;
             syncEventRequest.EventID = (ushort)eventCode;
 
             syncEventRequest.SyncData = data;
+
+            Debug.Log("时间：" + DateTime.UtcNow.ToString() + " 服务器时间：" + server.RemoteUtcTime.ToString());
 
             syncEventRequest.Timestamp = DateTimeUtil.TimeStamp;
 
