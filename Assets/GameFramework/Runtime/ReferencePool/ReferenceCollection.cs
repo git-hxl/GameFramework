@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -12,7 +12,7 @@ namespace GameFramework
 
         public int CurUsingRefCount { get; private set; }
 
-        public int ReferencesCount { get { return references.Count; }}
+        public int ReferencesCount { get { return references.Count; } }
 
         private static object locker = new object();
 
@@ -32,7 +32,7 @@ namespace GameFramework
 
             T value = default(T);
 
-            lock (references)
+            lock (locker)
             {
                 if (references.Count > 0)
                 {
