@@ -3,8 +3,7 @@ namespace GameFramework
 {
     public abstract class Singleton<T> where T : Singleton<T>, new()
     {
-        private bool isInited = false;
-        private static T instance;
+        private static T? instance;
         private static object locker = new object();
         public static T Instance
         {
@@ -17,7 +16,7 @@ namespace GameFramework
                         if (instance == null)
                         {
                             instance = new T();
-                            instance.Init();
+                            instance.OnInit();
                         }
                     }
                 }
@@ -26,29 +25,15 @@ namespace GameFramework
         }
 
         /// <summary>
-        /// 初始化单例
-        /// </summary>
-        public virtual void Init()
-        {
-            if (isInited)
-                return;
-
-            isInited = true;
-            OnInit();
-        }
-
-        /// <summary>
-        /// 释放单例
+        /// 閲婃斁鍗曚緥
         /// </summary>
         public void Dispose()
         {
             instance = null;
-            isInited = false;
             OnDispose();
         }
 
         protected abstract void OnInit();
         protected abstract void OnDispose();
-
     }
 }
