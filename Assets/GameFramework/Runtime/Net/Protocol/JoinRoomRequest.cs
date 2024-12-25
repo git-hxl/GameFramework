@@ -1,6 +1,7 @@
 
 
 using MessagePack;
+using System.Collections.Generic;
 
 namespace GameServer.Protocol
 {
@@ -15,6 +16,14 @@ namespace GameServer.Protocol
     public class JoinRoomResponse
     {
         public int RoomID { get; set; }
+        public int MasterID { get; set; }
+        public List<PlayerInfoInRoom> Others { get; set; }
+    }
+
+    [MessagePackObject(true)]
+    public class PlayerInfoInRoom
+    {
         public int PlayerID { get; set; }
+        public string PlayerName { get; set; }
     }
 }
