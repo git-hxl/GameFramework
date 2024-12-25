@@ -1,9 +1,11 @@
+using Cysharp.Threading.Tasks;
 using GameServer;
 using GameServer.Protocol;
 using LiteNetLib.Utils;
 using MessagePack;
 using System.Collections;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -17,6 +19,8 @@ namespace GameFramework
         public Button BtDisconnect;
         public Button BtJoinRoom;
         public Button BtLeaveRoom;
+
+        public Button BtRobitTest;
 
         public TMP_InputField inputFieldRoomID;
         public void OnConnect()
@@ -41,12 +45,12 @@ namespace GameFramework
 
         public void OnOtherJoinRoom(PlayerInfoInRoom playerInfoInRoom)
         {
-            Debug.Log("OnOtherJoinRoom");
+            Debug.Log("OnOtherJoinRoom: " + playerInfoInRoom.PlayerID);
         }
 
         public void OnOtherLeaveRoom(PlayerInfoInRoom playerInfoInRoom)
         {
-            Debug.Log("OnOtherLeaveRoom");
+            Debug.Log("OnOtherLeaveRoom: " + playerInfoInRoom.PlayerID);
         }
 
         public void OnSyncEvent(SyncEventData eventData)
@@ -88,6 +92,34 @@ namespace GameFramework
                 byte[] data = MessagePackSerializer.Serialize(leaveRoomRequest);
                 NetManager.Instance.Send(OperationCode.LeaveRoom, data, LiteNetLib.DeliveryMethod.ReliableOrdered);
             });
+
+            BtRobitTest.onClick.AddListener(() => { RobitJoinTest().Forget(); RobitLeaveTest().Forget(); });
+        }
+
+        private async UniTask RobitJoinTest()
+        {
+            while (true)
+            {
+                await UniTask.Delay(100);
+                JoinRoomRequest joinRoomRequest = new JoinRoomRequest();
+                joinRoomRequest.PlayerID = Random.Range(1, 100);
+
+                joinRoomRequest.RoomID = Random.Range(1, 10);
+                byte[] data = MessagePackSerializer.Serialize(joinRoomRequest);
+                NetManager.Instance.Send(OperationCode.JoinRoom, data, LiteNetLib.DeliveryMethod.ReliableOrdered);
+            }
+        }
+
+        private async UniTask RobitLeaveTest()
+        {
+            while (true)
+            {
+                await UniTask.Delay(100);
+                LeaveRoomRequest leaveRoomRequest = new LeaveRoomRequest();
+                leaveRoomRequest.PlayerID = Random.Range(1, 100);
+                byte[] data = MessagePackSerializer.Serialize(leaveRoomRequest);
+                NetManager.Instance.Send(OperationCode.LeaveRoom, data, LiteNetLib.DeliveryMethod.ReliableOrdered);
+            }
         }
     }
 }
