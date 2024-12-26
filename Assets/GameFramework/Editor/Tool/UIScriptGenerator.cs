@@ -108,8 +108,8 @@ namespace GameFramework.Editor
             {
                 string curScriptStr = File.ReadAllText(filePath);
 
-                string startTag = "\t#region 脚本工具生成的代码\r\n";
-                string endTag = "\t#endregion\r\n";
+                string startTag = "    #region 脚本工具生成的代码\r\n";
+                string endTag = "    #endregion\r\n";
                 int startIndex = curScriptStr.IndexOf(startTag);
                 int endIndex = curScriptStr.IndexOf(endTag);
 
@@ -136,11 +136,11 @@ namespace GameFramework.Editor
                 scriptStr.Append("public class " + scriptName + " : MonoBehaviour\r\n");
                 scriptStr.Append("{\r\n");
 
-                scriptStr.Append("\t#region 脚本工具生成的代码\r\n");
+                scriptStr.Append("    #region 脚本工具生成的代码\r\n");
 
                 scriptStr.Append(CreatVariables(root));
 
-                scriptStr.Append("\t#endregion\r\n");
+                scriptStr.Append("    #endregion\r\n");
 
                 scriptStr.Append("}\r\n");
             }
