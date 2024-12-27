@@ -13,7 +13,7 @@ namespace GameFramework
         public static Action<PlayerInfoInRoom> OnOtherJoinRoom;
         public static Action OnLeaveRoom;
         public static Action<PlayerInfoInRoom> OnOtherLeaveRoom;
-        public static Action<SyncEventData> OnSyncEvent;
+        public static Action<SyncEventRequest> OnSyncEvent;
 
         public static void Register(INetEvent netEvent)
         {

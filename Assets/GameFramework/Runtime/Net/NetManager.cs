@@ -100,7 +100,7 @@ namespace GameFramework
 
             byte[] data = reader.GetRemainingBytes();
 
-            Debug.Log(string.Format("Listener_NetworkReceiveEvent {0} {1} {2}", peer.Address.ToString(), operationCode, returnCode));
+            //Debug.Log(string.Format("Listener_NetworkReceiveEvent {0} {1} {2}", peer.Address.ToString(), operationCode, returnCode));
 
             if (returnCode != ReturnCode.Success)
             {
@@ -131,6 +131,7 @@ namespace GameFramework
                     OnOtherLeaveRoom(data, deliveryMethod);
                     break;
                 case OperationCode.SyncEvent:
+                    OnSyncEvent(data, deliveryMethod);
                     break;
                 default:
                     break;
@@ -139,21 +140,21 @@ namespace GameFramework
 
         private void Listener_PeerDisconnectedEvent(NetPeer peer, DisconnectInfo disconnectInfo)
         {
-            Debug.Log(string.Format("Listener_PeerDisconnectedEvent {0}", peer.Address.ToString()));
+            Debug.Log(string.Format("OnPeerDisconnected {0}", peer.Address.ToString()));
 
             NetEvent.OnDisconnect();
         }
 
         private void Listener_PeerConnectedEvent(NetPeer peer)
         {
-            Debug.Log(string.Format("Listener_PeerConnectedEvent {0}", peer.Address.ToString()));
+            Debug.Log(string.Format("OnPeerConnected {0}", peer.Address.ToString()));
 
             NetEvent.OnConnect();
         }
 
         private void Listener_ConnectionRequestEvent(ConnectionRequest request)
         {
-            Debug.Log(string.Format("Listener_ConnectionRequestEvent {0} {1}", request.RemoteEndPoint.ToString(), request.Data.GetString()));
+            Debug.Log(string.Format("OnConnectionRequest {0} {1}", request.RemoteEndPoint.ToString(), request.Data.GetString()));
         }
 
         private void OnJoinRoom(byte[] data, DeliveryMethod deliveryMethod)
@@ -181,8 +182,8 @@ namespace GameFramework
 
         private void OnSyncEvent(byte[] data, DeliveryMethod deliveryMethod)
         {
-            SyncEventData syncEventData = MessagePackSerializer.Deserialize<SyncEventData>(data);
-            NetEvent.OnSyncEvent(syncEventData);
+            SyncEventRequest syncEventRequest = MessagePackSerializer.Deserialize<SyncEventRequest>(data);
+            NetEvent.OnSyncEvent(syncEventRequest);
         }
 
     }

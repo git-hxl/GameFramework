@@ -14,6 +14,6 @@ namespace GameFramework
         void OnLeaveRoom();
         void OnOtherLeaveRoom(PlayerInfoInRoom playerInfoInRoom);
 
-        void OnSyncEvent(SyncEventData eventData);
+        void OnSyncEvent(SyncEventRequest syncEventRequest);
     }
 }

@@ -23,6 +23,8 @@ namespace GameFramework
         public Button BtRobitTest;
 
         public TMP_InputField inputFieldRoomID;
+
+        private Dictionary<int, GameObject> robots = new Dictionary<int, GameObject>();
         public void OnConnect()
         {
             Debug.Log("OnConnect");
@@ -36,6 +38,17 @@ namespace GameFramework
         public void OnJoinRoom(JoinRoomResponse joinRoomResponse)
         {
             Debug.Log("OnJoinRoom");
+
+            for (int i = 0; i < joinRoomResponse.Others.Count; i++)
+            {
+                PlayerInfoInRoom playerInfoInRoom = joinRoomResponse.Others[i];
+
+                GameObject robot = ObjectPoolManager.Instance.Acquire("Robot");
+
+                robot.name = playerInfoInRoom.PlayerID.ToString();
+
+                robots.Add(playerInfoInRoom.PlayerID, robot);
+            }
         }
 
         public void OnLeaveRoom()
@@ -46,21 +59,51 @@ namespace GameFramework
         public void OnOtherJoinRoom(PlayerInfoInRoom playerInfoInRoom)
         {
             Debug.Log("OnOtherJoinRoom: " + playerInfoInRoom.PlayerID);
+
+            GameObject robot = ObjectPoolManager.Instance.Acquire("Robot");
+
+            robot.name = playerInfoInRoom.PlayerID.ToString();
+
+            robots.Add(playerInfoInRoom.PlayerID, robot);
         }
 
         public void OnOtherLeaveRoom(PlayerInfoInRoom playerInfoInRoom)
         {
             Debug.Log("OnOtherLeaveRoom: " + playerInfoInRoom.PlayerID);
+
+            GameObject robot = robots[playerInfoInRoom.PlayerID];
+
+            ObjectPoolManager.Instance.Release("Robot", robot);
+
+            robots.Remove(playerInfoInRoom.PlayerID);
         }
 
-        public void OnSyncEvent(SyncEventData eventData)
+        public void OnSyncEvent(SyncEventRequest syncEventRequest)
         {
             Debug.Log("OnSyncEvent");
+
+            switch ((EventCode)syncEventRequest.EventID)
+            {
+                case EventCode.SyncTransform:
+
+                    SyncTransformData syncTransformData = MessagePackSerializer.Deserialize<SyncTransformData>(syncEventRequest.SyncData);
+
+                    GameObject robot = robots[syncEventRequest.PlayerID];
+
+                    SyncTransform syncTransform = robot.GetComponent<SyncTransform>();
+
+                    syncTransform.SetTargetTransform(syncTransformData);
+
+                    break;
+            }
         }
 
         // Start is called before the first frame update
         void Start()
         {
+
+            ObjectPoolManager.Instance.CreateReferenceCollection("Robot", "Assets/GameFramework/Example/Net/Cube.prefab");
+
             NetEvent.Register(this);
 
 
