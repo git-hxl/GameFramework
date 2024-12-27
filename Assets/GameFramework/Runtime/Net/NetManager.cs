@@ -14,6 +14,8 @@ namespace GameFramework
         private LiteNetLib.NetManager netManager;
         private EventBasedNetListener listener;
         private NetPeer server;
+
+        public int ID;
         protected override void OnDispose()
         {
             //throw new System.NotImplementedException();
@@ -72,6 +74,32 @@ namespace GameFramework
             }
             NetDataWriter netDataWriter = new NetDataWriter();
             netDataWriter.Put((ushort)code);
+            if (data != null)
+            {
+                netDataWriter.Put(data);
+            }
+            server.Send(netDataWriter, delivery);
+        }
+
+        public void SendEvent(EventCode eventCode, byte[] data, DeliveryMethod delivery)
+        {
+            if (server == null)
+            {
+                return;
+            }
+
+            SyncEventRequest syncEventRequest = new SyncEventRequest();
+            syncEventRequest.PlayerID = ID;
+            syncEventRequest.EventID = (ushort)eventCode;
+
+            syncEventRequest.SyncData = data;
+
+            syncEventRequest.Timestamp = DateTimeUtil.TimeStamp;
+
+            data = MessagePackSerializer.Serialize(syncEventRequest);
+
+            NetDataWriter netDataWriter = new NetDataWriter();
+            netDataWriter.Put((ushort)OperationCode.SyncEvent);
             if (data != null)
             {
                 netDataWriter.Put(data);
@@ -142,14 +170,14 @@ namespace GameFramework
         {
             Debug.Log(string.Format("OnPeerDisconnected {0}", peer.Address.ToString()));
 
-            NetEvent.OnDisconnect();
+            NetEvent.Instance.OnDisconnect();
         }
 
         private void Listener_PeerConnectedEvent(NetPeer peer)
         {
             Debug.Log(string.Format("OnPeerConnected {0}", peer.Address.ToString()));
 
-            NetEvent.OnConnect();
+            NetEvent.Instance.OnConnect();
         }
 
         private void Listener_ConnectionRequestEvent(ConnectionRequest request)
@@ -160,30 +188,30 @@ namespace GameFramework
         private void OnJoinRoom(byte[] data, DeliveryMethod deliveryMethod)
         {
             JoinRoomResponse response = MessagePackSerializer.Deserialize<JoinRoomResponse>(data);
-            NetEvent.OnJoinRoom(response);
+            NetEvent.Instance.OnJoinRoom(response);
         }
 
         private void OnOtherJoinRoom(byte[] data, DeliveryMethod deliveryMethod)
         {
             PlayerInfoInRoom playerInfoInRoom = MessagePackSerializer.Deserialize<PlayerInfoInRoom>(data);
-            NetEvent.OnOtherJoinRoom(playerInfoInRoom);
+            NetEvent.Instance.OnOtherJoinRoom(playerInfoInRoom);
         }
 
         private void OnLeaveRoom(byte[] data, DeliveryMethod deliveryMethod)
         {
-            NetEvent.OnLeaveRoom();
+            NetEvent.Instance.OnLeaveRoom();
         }
 
         private void OnOtherLeaveRoom(byte[] data, DeliveryMethod deliveryMethod)
         {
             PlayerInfoInRoom playerInfoInRoom = MessagePackSerializer.Deserialize<PlayerInfoInRoom>(data);
-            NetEvent.OnOtherLeaveRoom(playerInfoInRoom);
+            NetEvent.Instance.OnOtherLeaveRoom(playerInfoInRoom);
         }
 
         private void OnSyncEvent(byte[] data, DeliveryMethod deliveryMethod)
         {
             SyncEventRequest syncEventRequest = MessagePackSerializer.Deserialize<SyncEventRequest>(data);
-            NetEvent.OnSyncEvent(syncEventRequest);
+            NetEvent.Instance.OnSyncEvent(syncEventRequest);
         }
 
     }

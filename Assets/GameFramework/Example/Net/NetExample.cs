@@ -1,14 +1,10 @@
 using Cysharp.Threading.Tasks;
 using GameServer;
 using GameServer.Protocol;
-using LiteNetLib.Utils;
 using MessagePack;
-using System.Collections;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 using TMPro;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 namespace GameFramework
@@ -39,16 +35,22 @@ namespace GameFramework
         {
             Debug.Log("OnJoinRoom");
 
-            for (int i = 0; i < joinRoomResponse.Others.Count; i++)
-            {
-                PlayerInfoInRoom playerInfoInRoom = joinRoomResponse.Others[i];
+            //for (int i = 0; i < joinRoomResponse.Others.Count; i++)
+            //{
+            //    PlayerInfoInRoom playerInfoInRoom = joinRoomResponse.Others[i];
 
-                GameObject robot = ObjectPoolManager.Instance.Acquire("Robot");
+            //    GameObject robot = ObjectPoolManager.Instance.Acquire("Robot");
 
-                robot.name = playerInfoInRoom.PlayerID.ToString();
+            //    robot.name = playerInfoInRoom.PlayerID.ToString();
 
-                robots.Add(playerInfoInRoom.PlayerID, robot);
-            }
+            //    robots.Add(playerInfoInRoom.PlayerID, robot);
+            //}
+
+            GameObject player = ObjectPoolManager.Instance.Acquire("Player");
+
+            player.name = joinRoomResponse.PlayerID.ToString();
+
+            //robots.Add(joinRoomResponse.PlayerID, player);
         }
 
         public void OnLeaveRoom()
@@ -88,12 +90,29 @@ namespace GameFramework
 
                     SyncTransformData syncTransformData = MessagePackSerializer.Deserialize<SyncTransformData>(syncEventRequest.SyncData);
 
-                    GameObject robot = robots[syncEventRequest.PlayerID];
+                    if(robots.ContainsKey(syncEventRequest.PlayerID))
+                    {
+                        GameObject robot = robots[syncEventRequest.PlayerID];
 
-                    SyncTransform syncTransform = robot.GetComponent<SyncTransform>();
+                        SyncTransform syncTransform = robot.GetComponent<SyncTransform>();
+                        syncTransform.IsRemote = true;
 
-                    syncTransform.SetTargetTransform(syncTransformData);
+                        syncTransform.EnqueueRemoteData(syncTransformData);
 
+                    }
+                    else
+                    {
+
+                        GameObject robot = ObjectPoolManager.Instance.Acquire("Robot");
+
+                        SyncTransform syncTransform = robot.GetComponent<SyncTransform>();
+
+                        syncTransform.IsRemote = true;
+
+                        robot.name = syncEventRequest.PlayerID.ToString();
+
+                        robots.Add(syncEventRequest.PlayerID, robot);
+                    }
                     break;
             }
         }
@@ -102,11 +121,11 @@ namespace GameFramework
         void Start()
         {
 
-            ObjectPoolManager.Instance.CreateReferenceCollection("Robot", "Assets/GameFramework/Example/Net/Cube.prefab");
+            ObjectPoolManager.Instance.CreateReferenceCollection("Robot", "Assets/GameFramework/Example/Net/Prefabs/Robot.prefab");
 
-            NetEvent.Register(this);
+            ObjectPoolManager.Instance.CreateReferenceCollection("Player", "Assets/GameFramework/Example/Net/Prefabs/Player.prefab");
 
-
+            NetEvent.Instance.Register(this);
 
             BtConnect.onClick.AddListener(() =>
             {
@@ -121,7 +140,7 @@ namespace GameFramework
             BtJoinRoom.onClick.AddListener(() =>
             {
                 JoinRoomRequest joinRoomRequest = new JoinRoomRequest();
-                joinRoomRequest.PlayerID = 123;
+                joinRoomRequest.PlayerID = NetManager.Instance.ID;
                 int roomID = int.Parse(inputFieldRoomID.text);
                 joinRoomRequest.RoomID = roomID;
                 byte[] data = MessagePackSerializer.Serialize(joinRoomRequest);

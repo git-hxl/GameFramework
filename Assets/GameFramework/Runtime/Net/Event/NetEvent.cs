@@ -5,17 +5,17 @@ using System;
 
 namespace GameFramework
 {
-    public class NetEvent
+    public class NetEvent : Singleton<NetEvent>
     {
-        public static Action OnConnect;
-        public static Action OnDisconnect;
-        public static Action<JoinRoomResponse> OnJoinRoom;
-        public static Action<PlayerInfoInRoom> OnOtherJoinRoom;
-        public static Action OnLeaveRoom;
-        public static Action<PlayerInfoInRoom> OnOtherLeaveRoom;
-        public static Action<SyncEventRequest> OnSyncEvent;
+        public Action OnConnect;
+        public Action OnDisconnect;
+        public Action<JoinRoomResponse> OnJoinRoom;
+        public Action<PlayerInfoInRoom> OnOtherJoinRoom;
+        public Action OnLeaveRoom;
+        public Action<PlayerInfoInRoom> OnOtherLeaveRoom;
+        public Action<SyncEventRequest> OnSyncEvent;
 
-        public static void Register(INetEvent netEvent)
+        public void Register(INetEvent netEvent)
         {
             OnConnect += netEvent.OnConnect;
             OnDisconnect += netEvent.OnDisconnect;
@@ -26,7 +26,7 @@ namespace GameFramework
             OnSyncEvent += netEvent.OnSyncEvent;
         }
 
-        public static void UnRegister(INetEvent netEvent)
+        public void UnRegister(INetEvent netEvent)
         {
             OnConnect -= netEvent.OnConnect;
             OnDisconnect -= netEvent.OnDisconnect;
@@ -35,6 +35,16 @@ namespace GameFramework
             OnLeaveRoom -= netEvent.OnLeaveRoom;
             OnOtherLeaveRoom -= netEvent.OnOtherLeaveRoom;
             OnSyncEvent -= netEvent.OnSyncEvent;
+        }
+
+        protected override void OnDispose()
+        {
+            //throw new NotImplementedException();
+        }
+
+        protected override void OnInit()
+        {
+            //throw new NotImplementedException();
         }
     }
 }
