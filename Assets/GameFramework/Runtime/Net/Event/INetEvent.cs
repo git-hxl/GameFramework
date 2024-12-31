@@ -9,11 +9,9 @@ namespace GameFramework
         void OnDisconnect();
 
         void OnJoinRoom(JoinRoomResponse joinRoomResponse);
-        void OnOtherJoinRoom(PlayerInfoInRoom playerInfoInRoom);
+        void OnOtherJoinRoom(PlayerInfo playerInfo);
 
         void OnLeaveRoom();
-        void OnOtherLeaveRoom(PlayerInfoInRoom playerInfoInRoom);
-
-        void OnSyncEvent(SyncEventRequest syncEventRequest);
+        void OnOtherLeaveRoom(PlayerInfo playerInfo);
     }
 }

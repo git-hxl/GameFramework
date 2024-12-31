@@ -16,6 +16,7 @@ namespace GameFramework
         private void Start()
         {
             controller = gameObject.GetComponent<CharacterController>();
+            groundedPlayer = true;
         }
 
         void Update()
@@ -26,13 +27,16 @@ namespace GameFramework
                 playerVelocity.y = 0f;
             }
 
-            Vector3 move = new Vector3(Input.GetAxis("Horizontal"), 0, Input.GetAxis("Vertical"));
-            controller.Move(move * Time.deltaTime * playerSpeed);
+            Vector3 move = new Vector3(Input.GetAxis("Horizontal"), 0, Input.GetAxis("Vertical")).normalized;
+           
 
             if (move != Vector3.zero)
             {
                 gameObject.transform.forward = move;
             }
+
+            playerVelocity.x = move.x;
+            playerVelocity.z = move.z;
 
             // Changes the height position of the player..
             if (Input.GetKeyDown(KeyCode.Space) && groundedPlayer)
@@ -41,12 +45,10 @@ namespace GameFramework
             }
 
             playerVelocity.y += gravityValue * Time.deltaTime;
-            CollisionFlags collisionFlags = controller.Move(playerVelocity * Time.deltaTime);
 
-            if(collisionFlags == CollisionFlags.Below)
-            {
-                groundedPlayer = true;
-            }
+            CollisionFlags collisionFlags = controller.Move(playerVelocity * Time.deltaTime * playerSpeed);
+
+            //groundedPlayer = collisionFlags == CollisionFlags.Below;
         }
     }
 }

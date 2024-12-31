@@ -1,101 +1,73 @@
+using GameServer;
 using GameServer.Protocol;
 using MessagePack;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 
 namespace GameFramework
 {
     public class SyncTransform : MonoBehaviour
     {
-        [Range(1, 10)]
-        public int Buffer = 1;
-        public bool SyncPosition = true;
         public bool SyncRotation = true;
-        [Range(1, 30)]
-        public int SyncInterval = 10;
+        public bool SyncScale = true;
+        [Range(0.06f, 1f)]
+        public float SyncInterval = 0.1f;
 
-        private Dictionary<long, SyncTransformData> syncTransformDatas = new Dictionary<long, SyncTransformData>();
+        public bool IsClient { get; private set; }
 
-        //private Queue<SyncTransformData> syncTransformDatas = new Queue<SyncTransformData>();
+        private Queue<TransformSnapshoot> transformSnapshoots = new Queue<TransformSnapshoot>();
 
+        private TransformSnapshoot lastSnapshoot;
+        private TransformSnapshoot curSnapshoot;
+
+        private float sendTimer;
         private float syncTimer;
-        private SyncTransformData lastSendData;
 
-        private bool isLocal;
-
-        private int id;
-
-        private long lastTimeStamp;
-
-        private Vector3 lastPos;
-        private Quaternion lastRot;
-
+        private int syncSpeed;
         private void Start()
         {
-            
+
         }
 
         public void Init(int id)
         {
-            this.id = id;
-
-            isLocal = NetManager.Instance.PlayerID == id;
+            IsClient = NetManager.Instance.PlayerID == id;
         }
 
-        public void OnReceiveRemoteData(long timeStamp, SyncTransformData data)
+        public void AddData(long timestamp, SyncTransformData data)
         {
+            TransformSnapshoot transformSnapshoot = ReferencePool.Instance.Acquire<TransformSnapshoot>();
 
-            syncTransformDatas.Add(timeStamp, data);
-            if (lastTimeStamp == 0)
+            transformSnapshoot.Timestamp = timestamp;
+            transformSnapshoot.TransformData = data;
+
+            transformSnapshoots.Enqueue(transformSnapshoot);
+
+            if (transformSnapshoots.Count >= 10)
             {
-                lastTimeStamp = timeStamp;
-
-                transform.position = data.Position;
-                transform.rotation = data.Rotation;
-
-                lastPos = data.Position;
-                lastRot = data.Rotation;
+                Debug.LogWarning("TransformSnapshoots 缓存警告：" + transformSnapshoots.Count);
             }
 
+            if (curSnapshoot != null)
+            {
+                long offset = timestamp - curSnapshoot.Timestamp;
 
-            Debug.Log("OnReceiveRemoteData:" + Time.time);
-            //else
-            //{
-            //    long offset = timeStamp - lastTimeStamp;
+                syncSpeed = (int)(offset / 1000f / (SyncInterval / 2)) + 1;
 
-            //    float count = offset / 1000f / Time.fixedDeltaTime;
+                if (offset > 1000)
+                {
+                    Debug.LogWarning("TransformSnapshoots 延迟警告：" + offset);
+                }
+            }
 
-            //    for (float i = 0; i < count; i++)
-            //    {
-            //        Vector3 syncPos = Vector3.Lerp(data.Position, data.Position, i / count);
-
-            //        Quaternion syncRotation = Quaternion.Lerp(data.Rotation, data.Rotation, i / count);
-
-            //        data = new SyncTransformData();
-
-            //        data.Position = syncPos;
-            //        data.Rotation = syncRotation;
-
-            //        syncTransformDatas.Enqueue(data);
-            //    }
-            //}
-            //lastTimeStamp = timeStamp;
-            //lastReceiveData = data;
         }
 
         // Update is called once per frame
         void Update()
         {
-            if (isLocal)
+            if (IsClient)
             {
-                syncTimer += Time.deltaTime;
-                if (syncTimer > 1f / SyncInterval)
-                {
-                    SendTransformData();
-
-                    syncTimer = 0;
-                }
+                SendTransformData();
             }
             else
             {
@@ -105,77 +77,73 @@ namespace GameFramework
 
         private void SendTransformData()
         {
-            if (lastSendData != null)
+            sendTimer += Time.unscaledDeltaTime;
+            if (sendTimer < SyncInterval)
             {
-                if (Vector3.Distance(lastSendData.Position, transform.position) < 0.001f)
-                {
-                    return;
-                }
+                return;
             }
+            sendTimer = 0;
 
             SyncTransformData syncTransformData = new SyncTransformData();
             syncTransformData.Position = transform.position;
-            syncTransformData.Rotation = transform.rotation;
+            if (SyncRotation)
+                syncTransformData.Rotation = transform.rotation;
+            if (SyncScale)
+                syncTransformData.Scale = transform.localScale;
             byte[] data = MessagePackSerializer.Serialize(syncTransformData);
 
-            NetManager.Instance.SendEvent(GameServer.EventCode.SyncTransform, data, LiteNetLib.DeliveryMethod.Sequenced);
-
-            lastSendData = syncTransformData;
-
-            Debug.Log("SendTransformData:" + Time.time);
+            NetManager.Instance.SendSyncEvent(SyncCode.SyncTransform, data, LiteNetLib.DeliveryMethod.Sequenced);
         }
 
-        float syncTime;
         private void SyncTransformData()
         {
-            if (syncTransformDatas.Count <= 1 && lastTimeStamp != 0)
+            if (transformSnapshoots.Count <= 0)
+                return;
+
+            if (lastSnapshoot == curSnapshoot || curSnapshoot == null)
             {
-                lastTimeStamp += (int)(Time.deltaTime * 1000);
+                curSnapshoot = transformSnapshoots.Dequeue();
             }
 
-            if (syncTransformDatas.Count >= 2)
+            if (curSnapshoot == null)
             {
-                var syncTransformDatas2 = syncTransformDatas.OrderBy((a) => a.Key);
+                return;
+            }
 
-                foreach (var item in syncTransformDatas2)
+            if (lastSnapshoot == null)
+            {
+                lastSnapshoot = curSnapshoot;
+            }
+
+            syncTimer += Time.deltaTime;
+
+            float delta = 0;
+
+            if (curSnapshoot.Timestamp == lastSnapshoot.Timestamp)
+            {
+                delta = 1f;
+            }
+
+            delta = syncTimer / ((curSnapshoot.Timestamp - lastSnapshoot.Timestamp) / 1000f);
+
+            transform.position = Vector3.Lerp(lastSnapshoot.TransformData.Position, curSnapshoot.TransformData.Position, delta);
+
+            if (SyncRotation)
+                transform.rotation = Quaternion.Lerp(lastSnapshoot.TransformData.Rotation, curSnapshoot.TransformData.Rotation, delta);
+            if (SyncScale)
+                transform.localScale = Vector3.Lerp(lastSnapshoot.TransformData.Scale, curSnapshoot.TransformData.Scale, delta);
+
+            if (delta >= 1f)
+            {
+                if (lastSnapshoot != null && lastSnapshoot != curSnapshoot)
                 {
-                    if (lastTimeStamp < item.Key)
-                    {
-                        long offset = item.Key - lastTimeStamp;
-
-                        syncTime += Time.deltaTime;
-
-                        float delta = syncTime / (offset / 1000f);
-
-                        Debug.Log($"SyncTransformData offset {offset}  delta {delta}");
-
-                        transform.position = Vector3.Lerp(lastPos, item.Value.Position, delta);
-
-                        transform.rotation = Quaternion.Lerp(lastRot, item.Value.Rotation, delta);
-
-                        if (delta >= 1f)
-                        {
-                            lastRot = transform.rotation;
-                            lastPos = transform.position;
-
-                            lastTimeStamp = item.Key;
-
-                            syncTime = 0;
-
-                            syncTransformDatas.Remove(item.Key);
-                        }
-
-                        break;
-                    }
+                    ReferencePool.Instance.Release(lastSnapshoot);
                 }
+
+                lastSnapshoot = curSnapshoot;
+
+                syncTimer = 0;
             }
-        }
-
-        public void OnReceiveSync(SyncEventRequest syncEventRequest)
-        {
-
-
-            SyncTransformData syncTransformData = MessagePackSerializer.Deserialize<SyncTransformData>(syncEventRequest.SyncData);
         }
     }
 }

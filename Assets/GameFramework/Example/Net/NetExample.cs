@@ -35,16 +35,6 @@ namespace GameFramework
         {
             Debug.Log("OnJoinRoom");
 
-            //for (int i = 0; i < joinRoomResponse.Others.Count; i++)
-            //{
-            //    PlayerInfoInRoom playerInfoInRoom = joinRoomResponse.Others[i];
-
-            //    GameObject robot = ObjectPoolManager.Instance.Acquire("Robot");
-
-            //    robot.name = playerInfoInRoom.PlayerID.ToString();
-
-            //    robots.Add(playerInfoInRoom.PlayerID, robot);
-            //}
 
             GameObject player = ObjectPoolManager.Instance.Acquire("Player");
 
@@ -62,7 +52,7 @@ namespace GameFramework
             Debug.Log("OnLeaveRoom");
         }
 
-        public void OnOtherJoinRoom(PlayerInfoInRoom playerInfoInRoom)
+        public void OnOtherJoinRoom(PlayerInfo playerInfoInRoom)
         {
             Debug.Log("OnOtherJoinRoom: " + playerInfoInRoom.PlayerID);
 
@@ -73,7 +63,7 @@ namespace GameFramework
             robots.Add(playerInfoInRoom.PlayerID, robot);
         }
 
-        public void OnOtherLeaveRoom(PlayerInfoInRoom playerInfoInRoom)
+        public void OnOtherLeaveRoom(PlayerInfo playerInfoInRoom)
         {
             Debug.Log("OnOtherLeaveRoom: " + playerInfoInRoom.PlayerID);
 
@@ -84,48 +74,19 @@ namespace GameFramework
             robots.Remove(playerInfoInRoom.PlayerID);
         }
 
-        public void OnSyncEvent(SyncEventRequest syncEventRequest)
-        {
-           // Debug.Log("OnSyncEvent");
-
-            switch ((EventCode)syncEventRequest.EventID)
-            {
-                case EventCode.SyncTransform:
-
-                    SyncTransformData syncTransformData = MessagePackSerializer.Deserialize<SyncTransformData>(syncEventRequest.SyncData);
-
-                    if(robots.ContainsKey(syncEventRequest.PlayerID))
-                    {
-                        GameObject robot = robots[syncEventRequest.PlayerID];
-
-                        SyncTransform syncTransform = robot.GetComponent<SyncTransform>();
-                        syncTransform.OnReceiveRemoteData(syncEventRequest.Timestamp, syncTransformData);
-
-                    }
-                    else
-                    {
-
-                        GameObject robot = ObjectPoolManager.Instance.Acquire("Robot");
-
-                        SyncTransform syncTransform = robot.GetComponent<SyncTransform>();
-                        robot.name = syncEventRequest.PlayerID.ToString();
-                        robots.Add(syncEventRequest.PlayerID, robot);
-
-                        syncTransform.OnReceiveRemoteData(syncEventRequest.Timestamp, syncTransformData);
-                    }
-                    break;
-            }
-        }
 
         // Start is called before the first frame update
         void Start()
         {
+            Application.targetFrameRate = 60;
 
             ObjectPoolManager.Instance.CreateReferenceCollection("Robot", "Assets/GameFramework/Example/Net/Prefabs/Robot.prefab");
 
             ObjectPoolManager.Instance.CreateReferenceCollection("Player", "Assets/GameFramework/Example/Net/Prefabs/Player.prefab");
 
-            NetEvent.Instance.Register(this);
+            NetManager.Instance.NetEvent.Register(this);
+
+            NetManager.Instance.NetEvent.OnSyncTransformEvent += NetEvent_OnSyncTransformEvent;
 
             BtConnect.onClick.AddListener(() =>
             {
@@ -156,6 +117,29 @@ namespace GameFramework
             });
 
             BtRobitTest.onClick.AddListener(() => { RobitJoinTest().Forget(); RobitLeaveTest().Forget(); });
+        }
+
+        private void NetEvent_OnSyncTransformEvent(int playerID, long timestamp, SyncTransformData data)
+        {
+            if (robots.ContainsKey(playerID))
+            {
+                GameObject robot = robots[playerID];
+
+                SyncTransform syncTransform = robot.GetComponent<SyncTransform>();
+
+                syncTransform.AddData(timestamp, data);
+            }
+            else
+            {
+
+                GameObject robot = ObjectPoolManager.Instance.Acquire("Robot");
+
+                SyncTransform syncTransform = robot.GetComponent<SyncTransform>();
+                robot.name = playerID.ToString();
+                robots.Add(playerID, robot);
+
+                syncTransform.AddData(timestamp, data);
+            }
         }
 
         private async UniTask RobitJoinTest()

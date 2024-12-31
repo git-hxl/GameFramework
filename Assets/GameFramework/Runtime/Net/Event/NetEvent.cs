@@ -1,50 +1,89 @@
 
 
+using GameServer;
 using GameServer.Protocol;
+using MessagePack;
 using System;
 
 namespace GameFramework
 {
-    public class NetEvent : Singleton<NetEvent>
+    public class NetEvent
     {
-        public Action OnConnect;
-        public Action OnDisconnect;
-        public Action<JoinRoomResponse> OnJoinRoom;
-        public Action<PlayerInfoInRoom> OnOtherJoinRoom;
-        public Action OnLeaveRoom;
-        public Action<PlayerInfoInRoom> OnOtherLeaveRoom;
-        public Action<SyncEventRequest> OnSyncEvent;
+        public event Action OnConnectEvent;
+        public event Action OnDisconnectEvent;
+        public event Action<JoinRoomResponse> OnJoinRoomEvent;
+        public event Action<PlayerInfo> OnOtherJoinRoomEvent;
+        public event Action OnLeaveRoomEvent;
+        public event Action<PlayerInfo> OnOtherLeaveRoomEvent;
+
+        public event Action<int, long, SyncTransformData> OnSyncTransformEvent;
+
 
         public void Register(INetEvent netEvent)
         {
-            OnConnect += netEvent.OnConnect;
-            OnDisconnect += netEvent.OnDisconnect;
-            OnJoinRoom += netEvent.OnJoinRoom;
-            OnOtherJoinRoom += netEvent.OnOtherJoinRoom;
-            OnLeaveRoom += netEvent.OnLeaveRoom;
-            OnOtherLeaveRoom += netEvent.OnOtherLeaveRoom;
-            OnSyncEvent += netEvent.OnSyncEvent;
+            OnConnectEvent += netEvent.OnConnect;
+            OnDisconnectEvent += netEvent.OnDisconnect;
+            OnJoinRoomEvent += netEvent.OnJoinRoom;
+            OnOtherJoinRoomEvent += netEvent.OnOtherJoinRoom;
+            OnLeaveRoomEvent += netEvent.OnLeaveRoom;
+            OnOtherLeaveRoomEvent += netEvent.OnOtherLeaveRoom;
         }
 
-        public void UnRegister(INetEvent netEvent)
+        public void Unregister(INetEvent netEvent)
         {
-            OnConnect -= netEvent.OnConnect;
-            OnDisconnect -= netEvent.OnDisconnect;
-            OnJoinRoom -= netEvent.OnJoinRoom;
-            OnOtherJoinRoom -= netEvent.OnOtherJoinRoom;
-            OnLeaveRoom -= netEvent.OnLeaveRoom;
-            OnOtherLeaveRoom -= netEvent.OnOtherLeaveRoom;
-            OnSyncEvent -= netEvent.OnSyncEvent;
+            OnConnectEvent -= netEvent.OnConnect;
+            OnDisconnectEvent -= netEvent.OnDisconnect;
+            OnJoinRoomEvent -= netEvent.OnJoinRoom;
+            OnOtherJoinRoomEvent -= netEvent.OnOtherJoinRoom;
+            OnLeaveRoomEvent -= netEvent.OnLeaveRoom;
+            OnOtherLeaveRoomEvent -= netEvent.OnOtherLeaveRoom;
         }
 
-        protected override void OnDispose()
+
+        public void OnConnect()
         {
-            //throw new NotImplementedException();
+            OnConnectEvent();
+        }
+        public void OnDisconnect()
+        {
+            OnDisconnectEvent();
         }
 
-        protected override void OnInit()
+        public void OnJoinRoom(JoinRoomResponse joinRoomResponse)
         {
-            //throw new NotImplementedException();
+            OnJoinRoomEvent(joinRoomResponse);
+        }
+
+        public void OnOtherJoinRoom(PlayerInfo playerInfo)
+        {
+            OnOtherJoinRoomEvent(playerInfo);
+        }
+
+        public void OnLeaveRoom()
+        {
+            OnLeaveRoomEvent();
+        }
+
+        public void OnOtherLeaveRoom(PlayerInfo playerInfo)
+        {
+            OnOtherLeaveRoomEvent(playerInfo);
+        }
+
+
+        public void OnSync(SyncRequest syncRequest)
+        {
+            SyncCode syncCode = (SyncCode)(syncRequest.SyncCode);
+
+            switch (syncCode)
+            {
+                case SyncCode.SyncTransform:
+
+                    SyncTransformData syncTransformData = MessagePackSerializer.Deserialize<SyncTransformData>(syncRequest.SyncData);
+
+                    OnSyncTransformEvent(syncRequest.PlayerID, syncRequest.Timestamp, syncTransformData);
+
+                    break;
+            }
         }
     }
 }

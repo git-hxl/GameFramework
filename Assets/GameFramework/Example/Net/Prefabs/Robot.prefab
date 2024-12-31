@@ -180,7 +180,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a6ae85fe20b24f548babd798257487ff, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Buffer: 2
-  SyncPosition: 1
   SyncRotation: 1
-  SyncInterval: 10
+  SyncScale: 1
+  SyncInterval: 1
