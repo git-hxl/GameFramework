@@ -44,6 +44,17 @@ namespace GameFramework
 
             syncTransform.Init(joinRoomResponse.PlayerID);
 
+            for (int i = 0; i < joinRoomResponse.Others.Count; i++)
+            {
+                var playerInfoInRoom = joinRoomResponse.Others[i];
+
+                GameObject robot = ObjectPoolManager.Instance.Acquire("Robot");
+
+                robot.name = playerInfoInRoom.PlayerID.ToString();
+
+                robots.Add(playerInfoInRoom.PlayerID, robot);
+            }
+
             //robots.Add(joinRoomResponse.PlayerID, player);
         }
 
@@ -121,6 +132,9 @@ namespace GameFramework
 
         private void NetEvent_OnSyncTransformEvent(int playerID, long timestamp, SyncTransformData data)
         {
+            if (playerID == 0)
+                return;
+
             if (robots.ContainsKey(playerID))
             {
                 GameObject robot = robots[playerID];

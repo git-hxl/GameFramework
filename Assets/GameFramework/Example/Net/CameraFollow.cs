@@ -19,6 +19,8 @@ namespace GameFramework
             Vector3 desiredPosition = target.position + offset; // 计算期望的摄像机位置
             Vector3 smoothedPosition = Vector3.Lerp(transform.position, desiredPosition, smoothSpeed); // 使用线性插值实现平滑过渡
             transform.position = smoothedPosition; // 更新摄像机位置
+
+            //transform.rotation = target.rotation;
         }
     }
 }

@@ -225,4 +225,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   SyncRotation: 1
   SyncScale: 1
-  SyncInterval: 0.18
+  SyncFrames: 10

@@ -10,8 +10,9 @@ namespace GameFramework
     {
         public bool SyncRotation = true;
         public bool SyncScale = true;
-        [Range(0.06f, 1f)]
-        public float SyncInterval = 0.1f;
+        [Range(1, 30)]
+        public int SyncFrames = 10;
+        public int CacheCount = 5;
 
         public bool IsClient { get; private set; }
 
@@ -23,7 +24,6 @@ namespace GameFramework
         private float sendTimer;
         private float syncTimer;
 
-        private int syncSpeed;
         private void Start()
         {
 
@@ -37,29 +37,29 @@ namespace GameFramework
         public void AddData(long timestamp, SyncTransformData data)
         {
             TransformSnapshoot transformSnapshoot = ReferencePool.Instance.Acquire<TransformSnapshoot>();
-
             transformSnapshoot.Timestamp = timestamp;
             transformSnapshoot.TransformData = data;
 
             transformSnapshoots.Enqueue(transformSnapshoot);
 
-            if (transformSnapshoots.Count >= 10)
+            if (transformSnapshoots.Count > CacheCount * 2)
             {
                 Debug.LogWarning("TransformSnapshoots 缓存警告：" + transformSnapshoots.Count);
+
+                ReacToSnapshoot(curSnapshoot);
             }
 
             if (curSnapshoot != null)
             {
                 long offset = timestamp - curSnapshoot.Timestamp;
 
-                syncSpeed = (int)(offset / 1000f / (SyncInterval / 2)) + 1;
-
                 if (offset > 1000)
                 {
-                    Debug.LogWarning("TransformSnapshoots 延迟警告：" + offset);
+                    Debug.LogWarning("TransformSnapshoots 同步延迟警告：" + offset);
+
+                    ReacToSnapshoot(curSnapshoot);
                 }
             }
-
         }
 
         // Update is called once per frame
@@ -78,7 +78,7 @@ namespace GameFramework
         private void SendTransformData()
         {
             sendTimer += Time.unscaledDeltaTime;
-            if (sendTimer < SyncInterval)
+            if (sendTimer < 1f / SyncFrames)
             {
                 return;
             }
@@ -87,7 +87,7 @@ namespace GameFramework
             SyncTransformData syncTransformData = new SyncTransformData();
             syncTransformData.Position = transform.position;
             if (SyncRotation)
-                syncTransformData.Rotation = transform.rotation;
+                syncTransformData.Direction = transform.forward;
             if (SyncScale)
                 syncTransformData.Scale = transform.localScale;
             byte[] data = MessagePackSerializer.Serialize(syncTransformData);
@@ -97,7 +97,7 @@ namespace GameFramework
 
         private void SyncTransformData()
         {
-            if (transformSnapshoots.Count <= 0)
+            if (transformSnapshoots.Count <= CacheCount)
                 return;
 
             if (lastSnapshoot == curSnapshoot || curSnapshoot == null)
@@ -117,33 +117,35 @@ namespace GameFramework
 
             syncTimer += Time.deltaTime;
 
-            float delta = 0;
-
-            if (curSnapshoot.Timestamp == lastSnapshoot.Timestamp)
-            {
-                delta = 1f;
-            }
-
-            delta = syncTimer / ((curSnapshoot.Timestamp - lastSnapshoot.Timestamp) / 1000f);
+            float delta = syncTimer / (1f / SyncFrames);
 
             transform.position = Vector3.Lerp(lastSnapshoot.TransformData.Position, curSnapshoot.TransformData.Position, delta);
 
             if (SyncRotation)
-                transform.rotation = Quaternion.Lerp(lastSnapshoot.TransformData.Rotation, curSnapshoot.TransformData.Rotation, delta);
+                transform.forward = Vector3.Lerp(lastSnapshoot.TransformData.Direction, curSnapshoot.TransformData.Direction, delta);
             if (SyncScale)
                 transform.localScale = Vector3.Lerp(lastSnapshoot.TransformData.Scale, curSnapshoot.TransformData.Scale, delta);
 
+            Debug.DrawLine(transform.position, curSnapshoot.TransformData.Position, Color.red);
+
+            Debug.DrawRay(transform.position, curSnapshoot.TransformData.Direction * 5, Color.blue);
+
             if (delta >= 1f)
             {
-                if (lastSnapshoot != null && lastSnapshoot != curSnapshoot)
-                {
-                    ReferencePool.Instance.Release(lastSnapshoot);
-                }
-
-                lastSnapshoot = curSnapshoot;
-
-                syncTimer = 0;
+                ReacToSnapshoot(curSnapshoot);
             }
+        }
+
+        private void ReacToSnapshoot(TransformSnapshoot snapshoot)
+        {
+            if (lastSnapshoot != null && lastSnapshoot != snapshoot)
+            {
+                ReferencePool.Instance.Release(lastSnapshoot);
+            }
+
+            lastSnapshoot = snapshoot;
+
+            syncTimer = 0;
         }
     }
 }
