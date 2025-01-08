@@ -6,18 +6,18 @@ using LiteNetLib;
 using GameServer.Protocol;
 using GameServer;
 using LiteNetLib.Utils;
-using System;
 
 namespace GameFramework
 {
-    public class NetManager : MonoSingleton<NetManager>
+    public partial class NetManager : MonoSingleton<NetManager>
     {
         private LiteNetLib.NetManager netManager;
         private EventBasedNetListener listener;
         private NetPeer server;
-
-        public int PlayerID;
-        public NetEvent NetEvent { get; private set; }
+        /// <summary>
+        /// 唯一性ID,作本机识别用
+        /// </summary>
+        public int ID { get; private set; }
         protected override void OnDispose()
         {
             //throw new System.NotImplementedException();
@@ -37,8 +37,6 @@ namespace GameFramework
             listener.NetworkReceiveEvent += Listener_NetworkReceiveEvent;
 
             netManager = new LiteNetLib.NetManager(listener);
-
-            NetEvent = new NetEvent();
         }
 
         private void MessagePackInit()
@@ -54,8 +52,10 @@ namespace GameFramework
 
             Debug.Log("MessagePack Initialized");
         }
-        public void Connect(string ip, int port)
+        public  void Connect(string ip, int port, int id)
         {
+            ID = id;
+
             netManager.Start();
 
             server = netManager.Connect(ip, port, "qwer123456");
@@ -82,32 +82,28 @@ namespace GameFramework
             {
                 netDataWriter.Put(data);
             }
+            Debug.Log("发送字节大小：" + data.Length);
+
             server.Send(netDataWriter, delivery);
         }
 
-        public void SendSyncEvent(SyncCode syncCode, byte[] data, DeliveryMethod delivery)
+        public void SendSyncEvent(SyncEventCode syncCode, byte[] data, DeliveryMethod delivery)
         {
             if (server == null)
             {
                 return;
             }
 
-            SyncRequest syncEventRequest = new SyncRequest();
-            syncEventRequest.PlayerID = PlayerID;
-            syncEventRequest.SyncCode = (ushort)syncCode;
+            SyncEventRequest syncEventRequest = new SyncEventRequest();
+            syncEventRequest.PlayerID = ID;
+            syncEventRequest.SyncEventCode = (ushort)syncCode;
 
             syncEventRequest.SyncData = data;
             syncEventRequest.Timestamp = DateTimeUtil.TimeStamp;
 
             data = MessagePackSerializer.Serialize(syncEventRequest);
 
-            NetDataWriter netDataWriter = new NetDataWriter();
-            netDataWriter.Put((ushort)OperationCode.SyncEvent);
-            if (data != null)
-            {
-                netDataWriter.Put(data);
-            }
-            server.Send(netDataWriter, delivery);
+            Send(OperationCode.SyncEvent, data, delivery);
         }
 
         private void Update()
@@ -146,26 +142,25 @@ namespace GameFramework
                 case OperationCode.Register:
                     break;
                 case OperationCode.JoinRoom:
-                    break;
-                case OperationCode.OnJoinRoom:
                     OnJoinRoom(data, deliveryMethod);
-
-                    break;
-                case OperationCode.OnOtherJoinRoom:
-                    OnOtherJoinRoom(data, deliveryMethod);
                     break;
                 case OperationCode.LeaveRoom:
-                    break;
-                case OperationCode.OnLeaveRoom:
                     OnLeaveRoom(data, deliveryMethod);
                     break;
-                case OperationCode.OnOtherLeaveRoom:
-                    OnOtherLeaveRoom(data, deliveryMethod);
+
+                case OperationCode.UpdateRoomInfo:
+                    OnUpdateRoomInfo(data, deliveryMethod);
                     break;
+                case OperationCode.UpdatePlayerInfo:
+                    OnUpdatePlayerInfo(data, deliveryMethod);
+                    break;
+
+
                 case OperationCode.SyncEvent:
                     OnSyncEvent(data, deliveryMethod);
                     break;
                 default:
+                    Debug.LogError("不存在的操作码:" + operationCode);
                     break;
             }
         }
@@ -174,14 +169,14 @@ namespace GameFramework
         {
             Debug.Log(string.Format("OnPeerDisconnected {0}", peer.Address.ToString()));
 
-            NetEvent.OnDisconnect();
+            OnDisconnectEvent?.Invoke();
         }
 
         private void Listener_PeerConnectedEvent(NetPeer peer)
         {
             Debug.Log(string.Format("OnPeerConnected {0}", peer.Address.ToString()));
 
-            NetEvent.OnConnect();
+            OnConnectEvent?.Invoke();
         }
 
         private void Listener_ConnectionRequestEvent(ConnectionRequest request)
@@ -192,30 +187,51 @@ namespace GameFramework
         private void OnJoinRoom(byte[] data, DeliveryMethod deliveryMethod)
         {
             JoinRoomResponse response = MessagePackSerializer.Deserialize<JoinRoomResponse>(data);
-            NetEvent.OnJoinRoom(response);
+            OnJoinRoomEvent?.Invoke(response);
         }
 
-        private void OnOtherJoinRoom(byte[] data, DeliveryMethod deliveryMethod)
-        {
-            PlayerInfo playerInfoInRoom = MessagePackSerializer.Deserialize<PlayerInfo>(data);
-            NetEvent.OnOtherJoinRoom(playerInfoInRoom);
-        }
 
         private void OnLeaveRoom(byte[] data, DeliveryMethod deliveryMethod)
         {
-            NetEvent.OnLeaveRoom();
+            LeaveRoomResponse leaveRoomResponse = MessagePackSerializer.Deserialize<LeaveRoomResponse>(data);
+            OnLeaveRoomEvent?.Invoke(leaveRoomResponse);
         }
 
-        private void OnOtherLeaveRoom(byte[] data, DeliveryMethod deliveryMethod)
+
+        private void OnUpdatePlayerInfo(byte[] data, DeliveryMethod deliveryMethod)
         {
-            PlayerInfo playerInfoInRoom = MessagePackSerializer.Deserialize<PlayerInfo>(data);
-            NetEvent.OnOtherLeaveRoom(playerInfoInRoom);
+            PlayerInfo playerInfo = MessagePackSerializer.Deserialize<PlayerInfo>(data);
+            OnUpdatePlayerInfoEvent?.Invoke(playerInfo);
+        }
+
+        private void OnUpdateRoomInfo(byte[] data, DeliveryMethod deliveryMethod)
+        {
+            RoomInfo roomInfo = MessagePackSerializer.Deserialize<RoomInfo>(data);
+            OnUpdateRoomInfoEvent?.Invoke(roomInfo);
         }
 
         private void OnSyncEvent(byte[] data, DeliveryMethod deliveryMethod)
         {
-            SyncRequest syncEventRequest = MessagePackSerializer.Deserialize<SyncRequest>(data);
-            NetEvent.OnSync(syncEventRequest);
+            SyncEventRequest syncEventRequest = MessagePackSerializer.Deserialize<SyncEventRequest>(data);
+
+            switch (syncEventRequest.SyncEventCode)
+            {
+                case (ushort)SyncEventCode.SyncTransform:
+                    SyncTransformData syncTransformData = MessagePackSerializer.Deserialize<SyncTransformData>(syncEventRequest.SyncData);
+
+                    OnSyncTransformEvent?.Invoke(syncEventRequest.PlayerID, syncEventRequest.Timestamp, syncTransformData);
+
+                    break;
+
+                case (ushort)SyncEventCode.SyncAnimation:
+
+                    SyncAnimationData syncAnimationData = MessagePackSerializer.Deserialize<SyncAnimationData>(syncEventRequest.SyncData);
+
+                    OnSyncAnimationEvent?.Invoke(syncEventRequest.PlayerID, syncEventRequest.Timestamp, syncAnimationData);
+
+                    break;
+            }
+            //NetEvent.OnSync(syncEventRequest);
         }
 
     }

@@ -3,7 +3,7 @@ using GameServer.Protocol;
 
 namespace GameServer
 {
-    public class TransformSnapshoot : IReference
+    public class TransformSnapshot : IReference
     {
         public long Timestamp;
         public SyncTransformData TransformData;

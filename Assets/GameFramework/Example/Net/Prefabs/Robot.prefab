@@ -94,7 +94,7 @@ GameObject:
   - component: {fileID: 6349745421453915695}
   - component: {fileID: 4420561347640461783}
   - component: {fileID: 5710650502534726825}
-  - component: {fileID: 3237831347821874158}
+  - component: {fileID: 5193609567861526383}
   m_Layer: 0
   m_Name: Robot
   m_TagString: Untagged
@@ -168,7 +168,7 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!114 &3237831347821874158
+--- !u!114 &5193609567861526383
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -177,9 +177,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 2126950117257890170}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a6ae85fe20b24f548babd798257487ff, type: 3}
+  m_Script: {fileID: 11500000, guid: 26d6eff5f18a3414da909df937d16c56, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   SyncRotation: 1
   SyncScale: 1
-  SyncInterval: 1
+  SendFrames: 15
+  CacheCount: 2

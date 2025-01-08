@@ -9,7 +9,7 @@ using UnityEngine.UI;
 
 namespace GameFramework
 {
-    public class NetExample : MonoBehaviour, INetEvent
+    public class NetExample : MonoBehaviour
     {
         public Button BtConnect;
         public Button BtDisconnect;
@@ -35,73 +35,71 @@ namespace GameFramework
         {
             Debug.Log("OnJoinRoom");
 
-
-            GameObject player = ObjectPoolManager.Instance.Acquire("Player");
-
-            player.name = joinRoomResponse.PlayerID.ToString();
-
-            SyncTransform syncTransform = player.GetComponent<SyncTransform>();
-
-            syncTransform.Init(joinRoomResponse.PlayerID);
-
-            for (int i = 0; i < joinRoomResponse.Others.Count; i++)
+            if (joinRoomResponse.PlayerID == NetManager.Instance.ID)
             {
-                var playerInfoInRoom = joinRoomResponse.Others[i];
+                GameObject player = ObjectPoolManager.Instance.Acquire("Player");
 
-                GameObject robot = ObjectPoolManager.Instance.Acquire("Robot");
+                player.name = joinRoomResponse.PlayerID.ToString();
 
-                robot.name = playerInfoInRoom.PlayerID.ToString();
+                SyncTransform syncTransform = player.GetComponent<SyncTransform>();
 
-                robots.Add(playerInfoInRoom.PlayerID, robot);
+                syncTransform.Init(joinRoomResponse.PlayerID);
+            }
+            else
+            {
+                Debug.Log("OnOtherJoinRoom: " + joinRoomResponse.PlayerID);
+
+
+                for (int i = 0; i < joinRoomResponse.PlayerInfos.Count; i++)
+                {
+                    var playerInfoInRoom = joinRoomResponse.PlayerInfos[i];
+
+                    GameObject robot = ObjectPoolManager.Instance.Acquire("Robot");
+
+                    robot.name = playerInfoInRoom.PlayerID.ToString();
+
+                    robots.Add(playerInfoInRoom.PlayerID, robot);
+                }
+            }
+        }
+
+        public void OnLeaveRoom(LeaveRoomResponse leaveRoomResponse)
+        {
+            Debug.Log("OnLeaveRoom:" + leaveRoomResponse.PlayerID);
+
+            if (robots.ContainsKey(leaveRoomResponse.PlayerID))
+            {
+                GameObject robot = robots[leaveRoomResponse.PlayerID];
+
+                ObjectPoolManager.Instance.Release("Robot", robot);
+
+                robots.Remove(leaveRoomResponse.PlayerID);
             }
 
-            //robots.Add(joinRoomResponse.PlayerID, player);
-        }
 
-        public void OnLeaveRoom()
-        {
-            Debug.Log("OnLeaveRoom");
-        }
-
-        public void OnOtherJoinRoom(PlayerInfo playerInfoInRoom)
-        {
-            Debug.Log("OnOtherJoinRoom: " + playerInfoInRoom.PlayerID);
-
-            GameObject robot = ObjectPoolManager.Instance.Acquire("Robot");
-
-            robot.name = playerInfoInRoom.PlayerID.ToString();
-
-            robots.Add(playerInfoInRoom.PlayerID, robot);
-        }
-
-        public void OnOtherLeaveRoom(PlayerInfo playerInfoInRoom)
-        {
-            Debug.Log("OnOtherLeaveRoom: " + playerInfoInRoom.PlayerID);
-
-            GameObject robot = robots[playerInfoInRoom.PlayerID];
-
-            ObjectPoolManager.Instance.Release("Robot", robot);
-
-            robots.Remove(playerInfoInRoom.PlayerID);
         }
 
 
         // Start is called before the first frame update
         void Start()
         {
-            Application.targetFrameRate = 60;
+            //Application.targetFrameRate = 60;
 
             ObjectPoolManager.Instance.CreateReferenceCollection("Robot", "Assets/GameFramework/Example/Net/Prefabs/Robot.prefab");
 
             ObjectPoolManager.Instance.CreateReferenceCollection("Player", "Assets/GameFramework/Example/Net/Prefabs/Player.prefab");
 
-            NetManager.Instance.NetEvent.Register(this);
+            NetManager.Instance.OnConnectEvent += OnConnect;
+            NetManager.Instance.OnDisconnectEvent += OnDisconnect;
+            NetManager.Instance.OnJoinRoomEvent += OnJoinRoom;
+            NetManager.Instance.OnLeaveRoomEvent += OnLeaveRoom;
 
-            NetManager.Instance.NetEvent.OnSyncTransformEvent += NetEvent_OnSyncTransformEvent;
+            NetManager.Instance.OnSyncTransformEvent += NetEvent_OnSyncTransformEvent;
+
 
             BtConnect.onClick.AddListener(() =>
             {
-                NetManager.Instance.Connect("127.0.0.1", 1111);
+                NetManager.Instance.Connect("127.0.0.1", 8888, -1);
             });
 
             BtDisconnect.onClick.AddListener(() =>
@@ -112,7 +110,7 @@ namespace GameFramework
             BtJoinRoom.onClick.AddListener(() =>
             {
                 JoinRoomRequest joinRoomRequest = new JoinRoomRequest();
-                joinRoomRequest.PlayerID = NetManager.Instance.PlayerID;
+                joinRoomRequest.PlayerID = NetManager.Instance.ID;
                 int roomID = int.Parse(inputFieldRoomID.text);
                 joinRoomRequest.RoomID = roomID;
                 byte[] data = MessagePackSerializer.Serialize(joinRoomRequest);
@@ -130,6 +128,11 @@ namespace GameFramework
             BtRobitTest.onClick.AddListener(() => { RobitJoinTest().Forget(); RobitLeaveTest().Forget(); });
         }
 
+        private void Instance_OnConnectEvent()
+        {
+            throw new System.NotImplementedException();
+        }
+
         private void NetEvent_OnSyncTransformEvent(int playerID, long timestamp, SyncTransformData data)
         {
             if (playerID == 0)
@@ -141,7 +144,7 @@ namespace GameFramework
 
                 SyncTransform syncTransform = robot.GetComponent<SyncTransform>();
 
-                syncTransform.AddData(timestamp, data);
+                syncTransform.AddSnapshot(timestamp, data);
             }
             else
             {
@@ -152,7 +155,7 @@ namespace GameFramework
                 robot.name = playerID.ToString();
                 robots.Add(playerID, robot);
 
-                syncTransform.AddData(timestamp, data);
+                syncTransform.AddSnapshot(timestamp, data);
             }
         }
 
