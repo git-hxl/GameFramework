@@ -5,14 +5,11 @@ namespace GameFramework
 {
     public class PoolComponent : MonoBehaviour
     {
-        public void OnAcquire()
+        public string PoolName { get; private set; }
+
+        public void Init(string poolName)
         {
-
-        }
-
-        public void OnRelease()
-        {
-
+            PoolName = poolName;
         }
     }
 }

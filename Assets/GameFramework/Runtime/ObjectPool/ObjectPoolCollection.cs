@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -17,7 +17,7 @@ namespace GameFramework
         public int ReferencesCount { get { return references.Count; } }
 
 
-        public ObjectPoolCollection(string poolName,string assetPath)
+        public ObjectPoolCollection(string poolName, string assetPath)
         {
             this.poolName = poolName;
             this.assetPath = assetPath;
@@ -40,7 +40,17 @@ namespace GameFramework
                 var asset = ResourceManager.Instance.LoadAsset<GameObject>(assetPath);
 
                 gameObject = GameObject.Instantiate(asset);
+
+                PoolComponent poolComponent = gameObject.GetComponent<PoolComponent>();
+                if (poolComponent == null)
+                {
+                    poolComponent = gameObject.AddComponent<PoolComponent>();
+                }
+
+                poolComponent.Init(poolName);
             }
+
+            gameObject.SetActive(true);
 
             return gameObject;
         }
@@ -71,6 +81,14 @@ namespace GameFramework
                 GameObject gameObject = GameObject.Instantiate(asset);
 
                 gameObject.SetActive(false);
+
+                PoolComponent poolComponent = gameObject.GetComponent<PoolComponent>();
+                if (poolComponent == null)
+                {
+                    poolComponent = gameObject.AddComponent<PoolComponent>();
+                }
+
+                poolComponent.Init(poolName);
 
                 references.Enqueue(gameObject);
             }

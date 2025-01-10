@@ -29,7 +29,7 @@ namespace GameFramework
 
             if (Input.GetKeyUp(KeyCode.F2))
             {
-                if(queue.Count > 0)
+                if (queue.Count > 0)
                 {
                     if (Random.value > 0.5f)
                     {
@@ -37,7 +37,7 @@ namespace GameFramework
                     }
                     else
                     {
-                        ObjectPoolManager.Instance.Release("Cube", queue.Dequeue());
+                        ObjectPoolManager.Instance.Release(queue.Dequeue());
                     }
 
                 }

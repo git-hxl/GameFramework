@@ -6,15 +6,13 @@ using UnityEngine;
 
 namespace GameFramework
 {
+    [RequireComponent(typeof(NetComponent))]
     public class SyncTransform : MonoBehaviour
     {
         public bool SyncRotation = true;
         public bool SyncScale = true;
         [Range(1, 30)]
         public int SyncFrames = 15;
-        public int CacheCount = 2;
-
-        public bool IsClient { get; private set; }
 
         private Queue<TransformSnapshot> transformSnapshots = new Queue<TransformSnapshot>();
 
@@ -25,14 +23,12 @@ namespace GameFramework
         private float sendTimer;
         private float syncTimer;
 
+        private NetComponent netComponent;
+
+        public long Timestamp { get; private set; }
         private void Start()
         {
-
-        }
-
-        public void Init(int id)
-        {
-            IsClient = NetManager.Instance.ID == id;
+            netComponent = GetComponent<NetComponent>();
         }
 
         public void AddSnapshot(long timestamp, SyncTransformData data)
@@ -43,7 +39,7 @@ namespace GameFramework
 
             transformSnapshots.Enqueue(transformSnapshoot);
 
-            if (transformSnapshots.Count > CacheCount * 2)
+            if (transformSnapshots.Count > 10)
             {
                 Debug.LogWarning("TransformSnapshoots 缓存警告：" + transformSnapshots.Count);
             }
@@ -52,7 +48,10 @@ namespace GameFramework
         // Update is called once per frame
         void Update()
         {
-            if (IsClient)
+            if (netComponent == null)
+                return;
+
+            if (netComponent.IsLocal)
             {
                 SendTransformData();
             }
@@ -87,6 +86,7 @@ namespace GameFramework
             }
 
             SyncTransformData syncTransformData = lastSendData;
+            syncTransformData.ObjectID = netComponent.ObjectID;
             syncTransformData.Position = transform.position;
             if (SyncRotation)
                 syncTransformData.Direction = transform.forward;
@@ -104,16 +104,19 @@ namespace GameFramework
                 return;
             }
 
+            syncTimer += Time.deltaTime;
+
+            float delta = syncTimer / (1f / SyncFrames);
+
+
             var curSnapshot = transformSnapshots.Peek();
 
             if (lastSyncSnapshot == null)
             {
                 lastSyncSnapshot = curSnapshot;
+
+                delta = 1f;
             }
-
-            syncTimer += Time.deltaTime;
-
-            float delta = syncTimer / (1f / SyncFrames);
 
             transform.position = Vector3.Lerp(lastSyncSnapshot.TransformData.Position, curSnapshot.TransformData.Position, delta);
 
@@ -124,10 +127,17 @@ namespace GameFramework
 
             if (delta >= 1f)
             {
+                if (lastSyncSnapshot != null && lastSyncSnapshot != curSnapshot)
+                {
+                    ReferencePool.Instance.Release(lastSyncSnapshot);
+                }
+
                 lastSyncSnapshot = transformSnapshots.Dequeue();
 
                 syncTimer = 0;
             }
+
+            Timestamp = lastSyncSnapshot.Timestamp + (int)(syncTimer * 1000);
         }
     }
 }

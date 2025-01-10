@@ -17,7 +17,7 @@ namespace GameFramework
         /// <summary>
         /// 唯一性ID,作本机识别用
         /// </summary>
-        public int ID { get; private set; }
+        public int PlayerID { get; private set; }
         protected override void OnDispose()
         {
             //throw new System.NotImplementedException();
@@ -52,9 +52,9 @@ namespace GameFramework
 
             Debug.Log("MessagePack Initialized");
         }
-        public  void Connect(string ip, int port, int id)
+        public void Connect(string ip, int port, int playerID)
         {
-            ID = id;
+            PlayerID = playerID;
 
             netManager.Start();
 
@@ -94,8 +94,8 @@ namespace GameFramework
                 return;
             }
 
-            SyncEventRequest syncEventRequest = new SyncEventRequest();
-            syncEventRequest.PlayerID = ID;
+            SyncRequestData syncEventRequest = new SyncRequestData();
+            syncEventRequest.PlayerID = PlayerID;
             syncEventRequest.SyncEventCode = (ushort)syncCode;
 
             syncEventRequest.SyncData = data;
@@ -212,26 +212,15 @@ namespace GameFramework
 
         private void OnSyncEvent(byte[] data, DeliveryMethod deliveryMethod)
         {
-            SyncEventRequest syncEventRequest = MessagePackSerializer.Deserialize<SyncEventRequest>(data);
+            SyncRequestData syncRequestData = MessagePackSerializer.Deserialize<SyncRequestData>(data);
 
-            switch (syncEventRequest.SyncEventCode)
+            OnSyncRequestEvent?.Invoke(syncRequestData);
+
+            switch (syncRequestData.SyncEventCode)
             {
-                case (ushort)SyncEventCode.SyncTransform:
-                    SyncTransformData syncTransformData = MessagePackSerializer.Deserialize<SyncTransformData>(syncEventRequest.SyncData);
 
-                    OnSyncTransformEvent?.Invoke(syncEventRequest.PlayerID, syncEventRequest.Timestamp, syncTransformData);
-
-                    break;
-
-                case (ushort)SyncEventCode.SyncAnimation:
-
-                    SyncAnimationData syncAnimationData = MessagePackSerializer.Deserialize<SyncAnimationData>(syncEventRequest.SyncData);
-
-                    OnSyncAnimationEvent?.Invoke(syncEventRequest.PlayerID, syncEventRequest.Timestamp, syncAnimationData);
-
-                    break;
             }
-            //NetEvent.OnSync(syncEventRequest);
+
         }
 
     }

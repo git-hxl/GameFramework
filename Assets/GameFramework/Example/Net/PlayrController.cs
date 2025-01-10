@@ -13,10 +13,13 @@ namespace GameFramework
         public float jumpHeight = 1.0f;
         public float gravityValue = -9.81f;
 
+        private Animator animator;
         private void Start()
         {
             controller = gameObject.GetComponent<CharacterController>();
             groundedPlayer = true;
+
+            animator = gameObject.GetComponent<Animator>();
         }
 
         void Update()
@@ -28,7 +31,7 @@ namespace GameFramework
             }
 
             Vector3 move = new Vector3(Input.GetAxis("Horizontal"), 0, Input.GetAxis("Vertical")).normalized;
-           
+
 
             if (move != Vector3.zero)
             {
@@ -49,6 +52,15 @@ namespace GameFramework
             CollisionFlags collisionFlags = controller.Move(playerVelocity * Time.deltaTime * playerSpeed);
 
             //groundedPlayer = collisionFlags == CollisionFlags.Below;
+
+            if (animator != null)
+            {
+                if (Input.GetKeyDown(KeyCode.F))
+                {
+                    animator.SetTrigger("Fire");
+                }
+            }
+
         }
     }
 }

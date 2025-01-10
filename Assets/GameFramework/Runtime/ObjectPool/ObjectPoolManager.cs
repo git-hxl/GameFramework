@@ -34,9 +34,14 @@ namespace GameFramework
             return GetReferenceCollection(poolName).Acquire();
         }
 
-        public void Release(string poolName, GameObject reference)
+        public void Release(GameObject reference)
         {
-            GetReferenceCollection(poolName).Release(reference);
+            PoolComponent poolComponent = reference.GetComponent<PoolComponent>();
+
+            if (poolComponent != null)
+            {
+                GetReferenceCollection(poolComponent.PoolName).Release(reference);
+            }
         }
 
         public void Add(string poolName, int count)
@@ -65,7 +70,7 @@ namespace GameFramework
         {
             if (referenceCollections.ContainsKey(poolName))
             {
-                Debug.LogError("¶ÔÏó³ØÒÑ´æÔÚ£º" + poolName);
+                Debug.LogError("å¯¹è±¡æ± å·²å­˜åœ¨ï¼š" + poolName);
 
                 return null;
             }

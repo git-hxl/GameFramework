@@ -17,8 +17,6 @@ namespace GameFramework
         public event Action<RoomInfo> OnUpdateRoomInfoEvent;
         public event Action<PlayerInfo> OnUpdatePlayerInfoEvent;
 
-
-        public event Action<int, long, SyncTransformData> OnSyncTransformEvent;
-        public event Action<int, long, SyncAnimationData> OnSyncAnimationEvent;
+        public event Action<SyncRequestData> OnSyncRequestEvent;
     }
 }
