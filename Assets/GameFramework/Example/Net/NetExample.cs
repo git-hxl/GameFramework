@@ -41,12 +41,22 @@ namespace GameFramework
 
             //ObjectPoolManager.Instance.Acquire("Player");
 
-            //for (int i = 0; i < joinRoomResponse.PlayerInfos.Count; i++)
-            //{
-            //    var playerInfoInRoom = joinRoomResponse.PlayerInfos[i];
+            for (int i = 0; i < joinRoomResponse.PlayerInfos.Count; i++)
+            {
+                var playerInfoInRoom = joinRoomResponse.PlayerInfos[i];
 
-            //    NetPoolManager.Instance.SpawnObject("Robot", playerInfoInRoom.PlayerID);
-            //}
+                if (playerInfoInRoom.PlayerID != NetManager.Instance.PlayerID)
+                {
+                    SyncObjectData syncObjectData = new SyncObjectData();
+                    syncObjectData.PlayerID = playerInfoInRoom.PlayerID;
+                    syncObjectData.ObjectID = playerInfoInRoom.PlayerID;
+                    syncObjectData.Active = true;
+                    syncObjectData.PoolName = "Player_Remote";
+
+                    NetPoolManager.Instance.SpawnRemoteObject(syncObjectData);
+                }
+
+            }
         }
 
         public void OnLeaveRoom(LeaveRoomResponse leaveRoomResponse)

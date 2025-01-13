@@ -22,7 +22,6 @@ namespace GameFramework
 
         private float sendTimer;
         private float syncTimer;
-
         private NetComponent netComponent;
 
         public long Timestamp { get; private set; }
@@ -99,6 +98,8 @@ namespace GameFramework
 
         private void SyncTransformData()
         {
+            Timestamp += (int)(Time.unscaledDeltaTime * 1000);
+
             if (transformSnapshots.Count <= 0)
             {
                 return;
@@ -107,7 +108,6 @@ namespace GameFramework
             syncTimer += Time.deltaTime;
 
             float delta = syncTimer / (1f / SyncFrames);
-
 
             var curSnapshot = transformSnapshots.Peek();
 
@@ -134,10 +134,10 @@ namespace GameFramework
 
                 lastSyncSnapshot = transformSnapshots.Dequeue();
 
-                syncTimer = 0;
-            }
+                syncTimer = 0f;
 
-            Timestamp = lastSyncSnapshot.Timestamp + (int)(syncTimer * 1000);
+                Timestamp = lastSyncSnapshot.Timestamp;
+            }
         }
     }
 }

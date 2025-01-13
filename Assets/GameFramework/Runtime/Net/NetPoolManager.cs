@@ -42,7 +42,7 @@ namespace GameFramework
             SyncObjectData syncObjectData = new SyncObjectData();
             syncObjectData.PlayerID = NetManager.Instance.PlayerID;
             syncObjectData.ObjectID = objectID;
-            syncObjectData.PoolName = poolName;
+            syncObjectData.PoolName = poolName+"_Remote";
             syncObjectData.Active = true;
 
             byte[] data = MessagePackSerializer.Serialize(syncObjectData);
@@ -54,7 +54,7 @@ namespace GameFramework
 
         public void SpawnRemoteObject(SyncObjectData syncObjectData)
         {
-            string poolName = syncObjectData.PoolName + "_Remote";
+            string poolName = syncObjectData.PoolName;
             GameObject gameObject = ObjectPoolManager.Instance.Acquire(poolName);
             NetComponent netComponent = gameObject.GetComponent<NetComponent>();
             if (netComponent == null)

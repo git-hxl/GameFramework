@@ -7,7 +7,7 @@ using MessagePack;
 
 namespace GameFramework
 {
-    [RequireComponent(typeof(NetComponent))]
+    [RequireComponent(typeof(NetComponent), typeof(Animator))]
     public class SyncAnimation : MonoBehaviour
     {
         public bool FollowTransform;

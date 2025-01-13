@@ -228,7 +228,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   SyncRotation: 1
   SyncScale: 0
-  SyncFrames: 1
+  SyncFrames: 2
 --- !u!114 &3039904112559364247
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -274,4 +274,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bddaca588122a094e8fb58540e6ba5c9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  SyncFrames: 1
+  FollowTransform: 0
