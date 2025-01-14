@@ -185,7 +185,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   SyncRotation: 1
   SyncScale: 0
-  SyncFrames: 2
+  SyncFrames: 30
 --- !u!114 &5482817592118776312
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -211,6 +211,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   FollowTransform: 1
+  SyncFrames: 30
 --- !u!95 &2206382517050006595
 Animator:
   serializedVersion: 5

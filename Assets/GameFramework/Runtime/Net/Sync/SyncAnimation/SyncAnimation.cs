@@ -11,6 +11,8 @@ namespace GameFramework
     public class SyncAnimation : MonoBehaviour
     {
         public bool FollowTransform;
+        [Range(1, 30)]
+        public int SyncFrames = 15;
 
         private Queue<AnimationSnapshot> snapShots = new Queue<AnimationSnapshot>();
 
@@ -18,11 +20,13 @@ namespace GameFramework
 
         private SyncAnimationData[] lastSendDatas;
 
+        private float sendTimer;
         private NetComponent netComponent;
 
         private Animator animator;
 
         private SyncTransform syncTransform;
+
         private void Start()
         {
             netComponent = GetComponent<NetComponent>();
@@ -71,6 +75,13 @@ namespace GameFramework
 
         private void SendAnimationData()
         {
+            sendTimer += Time.unscaledDeltaTime;
+            if (sendTimer < 1f / SyncFrames)
+            {
+                return;
+            }
+            sendTimer = 0;
+
             for (int i = 0; i < animator.layerCount; i++)
             {
                 int stateHash;
