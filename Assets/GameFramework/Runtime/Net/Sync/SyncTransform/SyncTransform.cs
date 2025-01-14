@@ -105,7 +105,7 @@ namespace GameFramework
                 return;
             }
 
-            syncTimer += Time.deltaTime;
+            syncTimer += Time.unscaledDeltaTime;
 
             float delta = syncTimer / (1f / SyncFrames);
 
