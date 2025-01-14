@@ -274,5 +274,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bddaca588122a094e8fb58540e6ba5c9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  FollowTransform: 0
+  FollowTransform: 1
   SyncFrames: 30

@@ -74,7 +74,7 @@ namespace GameFramework
                 float distance = Vector3.Distance(transform.position, lastSendData.Position);
                 float angle = Vector3.Angle(transform.forward, lastSendData.Direction);
 
-                if (distance < 0.1f && angle < 1f)
+                if (distance < 0.0001f && angle < 0.01f)
                 {
                     return;
                 }
