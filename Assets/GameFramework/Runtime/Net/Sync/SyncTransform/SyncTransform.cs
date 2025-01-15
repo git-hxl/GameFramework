@@ -32,6 +32,8 @@ namespace GameFramework
 
         public void AddSnapshot(long timestamp, SyncTransformData data)
         {
+            //Debug.Log("处理事件时间：" + timestamp);
+
             TransformSnapshot transformSnapshoot = ReferencePool.Instance.Acquire<TransformSnapshot>();
             transformSnapshoot.Timestamp = timestamp;
             transformSnapshoot.TransformData = data;
@@ -69,7 +71,11 @@ namespace GameFramework
             }
             sendTimer = 0;
 
-            if (lastSendData != null)
+            if (lastSendData == null)
+            {
+                lastSendData = new SyncTransformData();
+            }
+            else
             {
                 float distance = Vector3.Distance(transform.position, lastSendData.Position);
                 float angle = Vector3.Angle(transform.forward, lastSendData.Direction);
@@ -79,11 +85,6 @@ namespace GameFramework
                     return;
                 }
             }
-            else
-            {
-                lastSendData = new SyncTransformData();
-            }
-
             SyncTransformData syncTransformData = lastSendData;
             syncTransformData.ObjectID = netComponent.ObjectID;
             syncTransformData.Position = transform.position;
@@ -107,16 +108,18 @@ namespace GameFramework
 
             syncTimer += Time.unscaledDeltaTime;
 
-            float delta = syncTimer / (1f / SyncFrames);
-
             var curSnapshot = transformSnapshots.Peek();
 
             if (lastSyncSnapshot == null)
             {
                 lastSyncSnapshot = curSnapshot;
 
-                delta = 1f;
+                Timestamp = lastSyncSnapshot.Timestamp;
             }
+
+            float syncInterval = 1f / SyncFrames;
+
+            float delta = syncTimer / syncInterval;
 
             transform.position = Vector3.Lerp(lastSyncSnapshot.TransformData.Position, curSnapshot.TransformData.Position, delta);
 
@@ -131,11 +134,8 @@ namespace GameFramework
                 {
                     ReferencePool.Instance.Release(lastSyncSnapshot);
                 }
-
                 lastSyncSnapshot = transformSnapshots.Dequeue();
-
-                syncTimer = 0f;
-
+                syncTimer -= syncInterval;
                 Timestamp = lastSyncSnapshot.Timestamp;
             }
         }

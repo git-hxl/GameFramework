@@ -6,6 +6,7 @@ using LiteNetLib;
 using GameServer.Protocol;
 using GameServer;
 using LiteNetLib.Utils;
+using System;
 
 namespace GameFramework
 {
@@ -102,7 +103,6 @@ namespace GameFramework
             syncEventRequest.Timestamp = DateTimeUtil.TimeStamp;
 
             data = MessagePackSerializer.Serialize(syncEventRequest);
-
             Send(OperationCode.SyncEvent, data, delivery);
         }
 
