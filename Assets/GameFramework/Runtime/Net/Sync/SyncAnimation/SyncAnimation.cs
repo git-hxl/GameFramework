@@ -130,7 +130,7 @@ namespace GameFramework
 
                 byte[] data = MessagePackSerializer.Serialize(syncAnimationData);
 
-                NetManager.Instance.SendSyncEvent(SyncEventCode.SyncAnimation, data, LiteNetLib.DeliveryMethod.Sequenced);
+                NetManager.Instance.Server.SendSyncEvent(NetManager.Instance.PlayerID, SyncEventCode.SyncAnimation, data, LiteNetLib.DeliveryMethod.Sequenced);
             }
         }
 

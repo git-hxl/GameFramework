@@ -94,7 +94,7 @@ namespace GameFramework
                 syncTransformData.Scale = transform.localScale;
             byte[] data = MessagePackSerializer.Serialize(syncTransformData);
 
-            NetManager.Instance.SendSyncEvent(SyncEventCode.SyncTransform, data, LiteNetLib.DeliveryMethod.Sequenced);
+            NetManager.Instance.Server.SendSyncEvent(NetManager.Instance.PlayerID, SyncEventCode.SyncTransform, data, LiteNetLib.DeliveryMethod.Sequenced);
         }
 
         private void SyncTransformData()

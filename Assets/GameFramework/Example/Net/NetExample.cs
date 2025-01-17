@@ -98,7 +98,7 @@ namespace GameFramework
                 int roomID = int.Parse(inputFieldRoomID.text);
                 joinRoomRequest.RoomID = roomID;
                 byte[] data = MessagePackSerializer.Serialize(joinRoomRequest);
-                NetManager.Instance.Send(OperationCode.JoinRoom, data, LiteNetLib.DeliveryMethod.ReliableOrdered);
+                NetManager.Instance.Server.SendRequest(OperationCode.JoinRoom, data, LiteNetLib.DeliveryMethod.ReliableOrdered);
             });
 
             BtLeaveRoom.onClick.AddListener(() =>
@@ -107,7 +107,7 @@ namespace GameFramework
                 LeaveRoomRequest leaveRoomRequest = new LeaveRoomRequest();
                 leaveRoomRequest.PlayerID = NetManager.Instance.PlayerID;
                 byte[] data = MessagePackSerializer.Serialize(leaveRoomRequest);
-                NetManager.Instance.Send(OperationCode.LeaveRoom, data, LiteNetLib.DeliveryMethod.ReliableOrdered);
+                NetManager.Instance.Server.SendRequest(OperationCode.LeaveRoom, data, LiteNetLib.DeliveryMethod.ReliableOrdered);
             });
 
             //BtRobitTest.onClick.AddListener(() => { RobitJoinTest().Forget(); RobitLeaveTest().Forget(); });
@@ -130,7 +130,7 @@ namespace GameFramework
 
                 joinRoomRequest.RoomID = Random.Range(1, 10);
                 byte[] data = MessagePackSerializer.Serialize(joinRoomRequest);
-                NetManager.Instance.Send(OperationCode.JoinRoom, data, LiteNetLib.DeliveryMethod.ReliableOrdered);
+                NetManager.Instance.Server.SendRequest(OperationCode.JoinRoom, data, LiteNetLib.DeliveryMethod.ReliableOrdered);
             }
         }
 
@@ -142,7 +142,7 @@ namespace GameFramework
                 LeaveRoomRequest leaveRoomRequest = new LeaveRoomRequest();
                 leaveRoomRequest.PlayerID = Random.Range(1, 100);
                 byte[] data = MessagePackSerializer.Serialize(leaveRoomRequest);
-                NetManager.Instance.Send(OperationCode.LeaveRoom, data, LiteNetLib.DeliveryMethod.ReliableOrdered);
+                NetManager.Instance.Server.SendRequest(OperationCode.LeaveRoom, data, LiteNetLib.DeliveryMethod.ReliableOrdered);
             }
         }
     }

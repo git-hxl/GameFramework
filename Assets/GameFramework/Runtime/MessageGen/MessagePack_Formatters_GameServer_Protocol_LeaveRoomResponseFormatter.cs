@@ -16,14 +16,14 @@
 
 namespace MessagePack.Formatters.GameServer.Protocol
 {
-    public sealed class JoinRoomRequestFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::GameServer.Protocol.JoinRoomRequest>
+    public sealed class LeaveRoomResponseFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::GameServer.Protocol.LeaveRoomResponse>
     {
-        // RoomID
-        private static global::System.ReadOnlySpan<byte> GetSpan_RoomID() => new byte[1 + 6] { 166, 82, 111, 111, 109, 73, 68 };
         // PlayerID
         private static global::System.ReadOnlySpan<byte> GetSpan_PlayerID() => new byte[1 + 8] { 168, 80, 108, 97, 121, 101, 114, 73, 68 };
+        // RoomInfo
+        private static global::System.ReadOnlySpan<byte> GetSpan_RoomInfo() => new byte[1 + 8] { 168, 82, 111, 111, 109, 73, 110, 102, 111 };
 
-        public void Serialize(ref global::MessagePack.MessagePackWriter writer, global::GameServer.Protocol.JoinRoomRequest value, global::MessagePack.MessagePackSerializerOptions options)
+        public void Serialize(ref global::MessagePack.MessagePackWriter writer, global::GameServer.Protocol.LeaveRoomResponse value, global::MessagePack.MessagePackSerializerOptions options)
         {
             if (value is null)
             {
@@ -31,14 +31,15 @@ namespace MessagePack.Formatters.GameServer.Protocol
                 return;
             }
 
+            var formatterResolver = options.Resolver;
             writer.WriteMapHeader(2);
-            writer.WriteRaw(GetSpan_RoomID());
-            writer.Write(value.RoomID);
             writer.WriteRaw(GetSpan_PlayerID());
             writer.Write(value.PlayerID);
+            writer.WriteRaw(GetSpan_RoomInfo());
+            global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::GameServer.Protocol.RoomInfo>(formatterResolver).Serialize(ref writer, value.RoomInfo, options);
         }
 
-        public global::GameServer.Protocol.JoinRoomRequest Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
+        public global::GameServer.Protocol.LeaveRoomResponse Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
         {
             if (reader.TryReadNil())
             {
@@ -46,8 +47,9 @@ namespace MessagePack.Formatters.GameServer.Protocol
             }
 
             options.Security.DepthStep(ref reader);
+            var formatterResolver = options.Resolver;
             var length = reader.ReadMapHeader();
-            var ____result = new global::GameServer.Protocol.JoinRoomRequest();
+            var ____result = new global::GameServer.Protocol.LeaveRoomResponse();
 
             for (int i = 0; i < length; i++)
             {
@@ -58,16 +60,17 @@ namespace MessagePack.Formatters.GameServer.Protocol
                     FAIL:
                       reader.Skip();
                       continue;
-                    case 6:
-                        if (global::MessagePack.Internal.AutomataKeyGen.GetKey(ref stringKey) != 75082159320914UL) { goto FAIL; }
-
-                        ____result.RoomID = reader.ReadInt32();
-                        continue;
                     case 8:
-                        if (global::MessagePack.Internal.AutomataKeyGen.GetKey(ref stringKey) != 4920589848032668752UL) { goto FAIL; }
-
-                        ____result.PlayerID = reader.ReadInt32();
-                        continue;
+                        switch (global::MessagePack.Internal.AutomataKeyGen.GetKey(ref stringKey))
+                        {
+                            default: goto FAIL;
+                            case 4920589848032668752UL:
+                                ____result.PlayerID = reader.ReadInt32();
+                                continue;
+                            case 8027224647482175314UL:
+                                ____result.RoomInfo = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::GameServer.Protocol.RoomInfo>(formatterResolver).Deserialize(ref reader, options);
+                                continue;
+                        }
 
                 }
             }

@@ -15,6 +15,8 @@ namespace GameFramework
         private LiteNetLib.NetManager netManager;
         private EventBasedNetListener listener;
         private NetPeer server;
+
+        public NetPeer Server { get { return server; } }
         /// <summary>
         /// 唯一性ID,作本机识别用
         /// </summary>
@@ -71,41 +73,6 @@ namespace GameFramework
             server = null;
         }
 
-        public void Send(OperationCode code, byte[] data, DeliveryMethod delivery)
-        {
-            if (server == null)
-            {
-                return;
-            }
-            NetDataWriter netDataWriter = new NetDataWriter();
-            netDataWriter.Put((ushort)code);
-            if (data != null)
-            {
-                netDataWriter.Put(data);
-            }
-            Debug.Log("发送字节大小：" + data.Length);
-
-            server.Send(netDataWriter, delivery);
-        }
-
-        public void SendSyncEvent(SyncEventCode syncCode, byte[] data, DeliveryMethod delivery)
-        {
-            if (server == null)
-            {
-                return;
-            }
-
-            SyncRequestData syncEventRequest = new SyncRequestData();
-            syncEventRequest.PlayerID = PlayerID;
-            syncEventRequest.SyncEventCode = (ushort)syncCode;
-
-            syncEventRequest.SyncData = data;
-            syncEventRequest.Timestamp = DateTimeUtil.TimeStamp;
-
-            data = MessagePackSerializer.Serialize(syncEventRequest);
-            Send(OperationCode.SyncEvent, data, delivery);
-        }
-
         private void Update()
         {
             if (netManager != null)
@@ -120,48 +87,61 @@ namespace GameFramework
                 netManager.Stop();
         }
 
+#if UNITY_EDITOR
+        void OnGUI()
+        {
+            if (server != null)
+            {
+                GUILayout.TextField($"Ping {server.Ping} MTU {server.Mtu} Interval {server.TimeSinceLastPacket} RemoteDelta {server.RemoteTimeDelta}");
+            }
+        }
+#endif
+
         private void Listener_NetworkReceiveEvent(NetPeer peer, NetPacketReader reader, byte channel, DeliveryMethod deliveryMethod)
         {
-            OperationCode operationCode = (OperationCode)reader.GetUShort();
-            ReturnCode returnCode = (ReturnCode)reader.GetUShort();
-
-            byte[] data = reader.GetRemainingBytes();
-
-            //Debug.Log(string.Format("Listener_NetworkReceiveEvent {0} {1} {2}", peer.Address.ToString(), operationCode, returnCode));
-
-            if (returnCode != ReturnCode.Success)
+            try
             {
-                Debug.LogWarning(string.Format("Net Error {0} {1} {2}", peer.Address.ToString(), operationCode, returnCode));
-                return;
+                Response response = MessagePackSerializer.Deserialize<Response>(reader.GetRemainingBytes());
+
+                Debug.Log($"接收数据：{response.OperationCode} {response.ReturnCode} {response.ErrorMsg} 延迟：{DateTimeUtil.TimeStamp - response.Timestamp} ping：{peer.Ping}");
+
+                if (response.ReturnCode != ReturnCode.Success)
+                {
+                    return;
+                }
+
+                switch (response.OperationCode)
+                {
+                    case OperationCode.Login:
+                        break;
+                    case OperationCode.Register:
+                        break;
+                    case OperationCode.JoinRoom:
+                        OnJoinRoom(response, deliveryMethod);
+                        break;
+                    case OperationCode.LeaveRoom:
+                        OnLeaveRoom(response, deliveryMethod);
+                        break;
+
+                    case OperationCode.UpdateRoomInfo:
+                        OnUpdateRoomInfo(response, deliveryMethod);
+                        break;
+                    case OperationCode.UpdatePlayerInfo:
+                        OnUpdatePlayerInfo(response, deliveryMethod);
+                        break;
+
+
+                    case OperationCode.SyncEvent:
+                        OnSyncEvent(response, deliveryMethod);
+                        break;
+                    default:
+                        Debug.LogError("不存在的操作码:" + response.OperationCode);
+                        break;
+                }
             }
-
-            switch (operationCode)
+            catch (Exception e)
             {
-                case OperationCode.Login:
-                    break;
-                case OperationCode.Register:
-                    break;
-                case OperationCode.JoinRoom:
-                    OnJoinRoom(data, deliveryMethod);
-                    break;
-                case OperationCode.LeaveRoom:
-                    OnLeaveRoom(data, deliveryMethod);
-                    break;
-
-                case OperationCode.UpdateRoomInfo:
-                    OnUpdateRoomInfo(data, deliveryMethod);
-                    break;
-                case OperationCode.UpdatePlayerInfo:
-                    OnUpdatePlayerInfo(data, deliveryMethod);
-                    break;
-
-
-                case OperationCode.SyncEvent:
-                    OnSyncEvent(data, deliveryMethod);
-                    break;
-                default:
-                    Debug.LogError("不存在的操作码:" + operationCode);
-                    break;
+                Debug.LogError(e);
             }
         }
 
@@ -184,37 +164,37 @@ namespace GameFramework
             Debug.Log(string.Format("OnConnectionRequest {0} {1}", request.RemoteEndPoint.ToString(), request.Data.GetString()));
         }
 
-        private void OnJoinRoom(byte[] data, DeliveryMethod deliveryMethod)
+        private void OnJoinRoom(Response response, DeliveryMethod deliveryMethod)
         {
-            JoinRoomResponse response = MessagePackSerializer.Deserialize<JoinRoomResponse>(data);
-            OnJoinRoomEvent?.Invoke(response);
+            JoinRoomResponse joinRoomResponse = MessagePackSerializer.Deserialize<JoinRoomResponse>(response.Data);
+            OnJoinRoomEvent?.Invoke(joinRoomResponse);
         }
 
 
-        private void OnLeaveRoom(byte[] data, DeliveryMethod deliveryMethod)
+        private void OnLeaveRoom(Response response, DeliveryMethod deliveryMethod)
         {
-            LeaveRoomResponse leaveRoomResponse = MessagePackSerializer.Deserialize<LeaveRoomResponse>(data);
+            LeaveRoomResponse leaveRoomResponse = MessagePackSerializer.Deserialize<LeaveRoomResponse>(response.Data);
             OnLeaveRoomEvent?.Invoke(leaveRoomResponse);
         }
 
 
-        private void OnUpdatePlayerInfo(byte[] data, DeliveryMethod deliveryMethod)
+        private void OnUpdatePlayerInfo(Response response, DeliveryMethod deliveryMethod)
         {
-            PlayerInfo playerInfo = MessagePackSerializer.Deserialize<PlayerInfo>(data);
+            PlayerInfo playerInfo = MessagePackSerializer.Deserialize<PlayerInfo>(response.Data);
             OnUpdatePlayerInfoEvent?.Invoke(playerInfo);
         }
 
-        private void OnUpdateRoomInfo(byte[] data, DeliveryMethod deliveryMethod)
+        private void OnUpdateRoomInfo(Response response, DeliveryMethod deliveryMethod)
         {
-            RoomInfo roomInfo = MessagePackSerializer.Deserialize<RoomInfo>(data);
+            RoomInfo roomInfo = MessagePackSerializer.Deserialize<RoomInfo>(response.Data);
             OnUpdateRoomInfoEvent?.Invoke(roomInfo);
         }
 
-        private void OnSyncEvent(byte[] data, DeliveryMethod deliveryMethod)
+        private void OnSyncEvent(Response response, DeliveryMethod deliveryMethod)
         {
-            SyncRequestData syncRequestData = MessagePackSerializer.Deserialize<SyncRequestData>(data);
+            SyncEventRequest syncRequestData = MessagePackSerializer.Deserialize<SyncEventRequest>(response.Data);
 
-            OnSyncRequestEvent?.Invoke(syncRequestData);
+            OnSyncRequestEvent?.Invoke(response.Timestamp, syncRequestData);
 
             switch (syncRequestData.SyncEventCode)
             {

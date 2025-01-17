@@ -42,12 +42,12 @@ namespace GameFramework
             SyncObjectData syncObjectData = new SyncObjectData();
             syncObjectData.PlayerID = NetManager.Instance.PlayerID;
             syncObjectData.ObjectID = objectID;
-            syncObjectData.PoolName = poolName+"_Remote";
+            syncObjectData.PoolName = poolName + "_Remote";
             syncObjectData.Active = true;
 
             byte[] data = MessagePackSerializer.Serialize(syncObjectData);
 
-            NetManager.Instance.SendSyncEvent(SyncEventCode.SyncObject, data, LiteNetLib.DeliveryMethod.ReliableOrdered);
+            NetManager.Instance.Server.SendSyncEvent(NetManager.Instance.PlayerID, SyncEventCode.SyncObject, data, LiteNetLib.DeliveryMethod.ReliableOrdered);
 
             return netComponent;
         }
@@ -87,7 +87,7 @@ namespace GameFramework
 
                 byte[] data = MessagePackSerializer.Serialize(syncObjectData);
 
-                NetManager.Instance.SendSyncEvent(SyncEventCode.SyncObject, data, LiteNetLib.DeliveryMethod.ReliableOrdered);
+                NetManager.Instance.Server.SendSyncEvent(NetManager.Instance.PlayerID, SyncEventCode.SyncObject, data, LiteNetLib.DeliveryMethod.ReliableOrdered);
             }
 
             ObjectPoolManager.Instance.Release(netComponent.gameObject);
@@ -122,12 +122,12 @@ namespace GameFramework
             return null;
         }
 
-        private void Instance_OnSyncRequestEvent(SyncRequestData syncRequestData)
+        private void Instance_OnSyncRequestEvent(long timestamp, SyncEventRequest syncRequestData)
         {
             NetComponent netComponent = null;
             switch (syncRequestData.SyncEventCode)
             {
-                case (ushort)SyncEventCode.SyncObject:
+                case SyncEventCode.SyncObject:
 
                     SyncObjectData syncObjectData = MessagePackSerializer.Deserialize<SyncObjectData>(syncRequestData.SyncData);
 
@@ -141,7 +141,7 @@ namespace GameFramework
                     }
                     break;
 
-                case (ushort)SyncEventCode.SyncTransform:
+                case SyncEventCode.SyncTransform:
                     SyncTransformData syncTransformData = MessagePackSerializer.Deserialize<SyncTransformData>(syncRequestData.SyncData);
 
                     netComponent = GetObject(syncRequestData.PlayerID, syncTransformData.ObjectID);
@@ -151,11 +151,11 @@ namespace GameFramework
 
                     SyncTransform syncTransform = netComponent.GetComponent<SyncTransform>();
 
-                    syncTransform.AddSnapshot(syncRequestData.Timestamp, syncTransformData);
+                    syncTransform.AddSnapshot(timestamp, syncTransformData);
 
                     break;
 
-                case (ushort)SyncEventCode.SyncAnimation:
+                case SyncEventCode.SyncAnimation:
 
                     SyncAnimationData syncAnimationData = MessagePackSerializer.Deserialize<SyncAnimationData>(syncRequestData.SyncData);
 
@@ -166,7 +166,7 @@ namespace GameFramework
 
                     SyncAnimation syncAnimation = netComponent.GetComponent<SyncAnimation>();
 
-                    syncAnimation.AddSnapshot(syncRequestData.Timestamp, syncAnimationData);
+                    syncAnimation.AddSnapshot(timestamp, syncAnimationData);
                     break;
             }
         }
