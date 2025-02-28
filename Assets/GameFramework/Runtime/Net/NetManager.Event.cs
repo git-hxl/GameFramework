@@ -1,4 +1,5 @@
 
+using GameServer;
 using GameServer.Protocol;
 using System;
 
@@ -15,8 +16,14 @@ namespace GameFramework
         public event Action<LeaveRoomResponse> OnLeaveRoomEvent;
 
         public event Action<RoomInfo> OnUpdateRoomInfoEvent;
-        public event Action<PlayerInfo> OnUpdatePlayerInfoEvent;
+        public event Action<UserInfo> OnUpdatePlayerInfoEvent;
 
-        public event Action<long,SyncEventRequest> OnSyncRequestEvent;
+        public event Action<SyncRequest> OnSyncRequestEvent;
+
+        public event Action<SyncRequest, ObjectData> OnSyncSpawnObjectEvent;
+        public event Action<SyncRequest, ObjectData> OnSyncRemoveObjectEvent;
+        public event Action<SyncRequest, TransformData> OnSyncTransformEvent;
+        public event Action<SyncRequest, AnimationData> OnSyncAnimationEvent;
+
     }
 }

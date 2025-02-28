@@ -20,6 +20,10 @@ namespace MessagePack.Formatters.GameServer.Protocol
     {
         // RoomID
         private static global::System.ReadOnlySpan<byte> GetSpan_RoomID() => new byte[1 + 6] { 166, 82, 111, 111, 109, 73, 68 };
+        // UserID
+        private static global::System.ReadOnlySpan<byte> GetSpan_UserID() => new byte[1 + 6] { 166, 85, 115, 101, 114, 73, 68 };
+        // Timestamp
+        private static global::System.ReadOnlySpan<byte> GetSpan_Timestamp() => new byte[1 + 9] { 169, 84, 105, 109, 101, 115, 116, 97, 109, 112 };
 
         public void Serialize(ref global::MessagePack.MessagePackWriter writer, global::GameServer.Protocol.CloseRoomRequest value, global::MessagePack.MessagePackSerializerOptions options)
         {
@@ -29,9 +33,13 @@ namespace MessagePack.Formatters.GameServer.Protocol
                 return;
             }
 
-            writer.WriteMapHeader(1);
+            writer.WriteMapHeader(3);
             writer.WriteRaw(GetSpan_RoomID());
             writer.Write(value.RoomID);
+            writer.WriteRaw(GetSpan_UserID());
+            writer.Write(value.UserID);
+            writer.WriteRaw(GetSpan_Timestamp());
+            writer.Write(value.Timestamp);
         }
 
         public global::GameServer.Protocol.CloseRoomRequest Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
@@ -55,9 +63,20 @@ namespace MessagePack.Formatters.GameServer.Protocol
                       reader.Skip();
                       continue;
                     case 6:
-                        if (global::MessagePack.Internal.AutomataKeyGen.GetKey(ref stringKey) != 75082159320914UL) { goto FAIL; }
+                        switch (global::MessagePack.Internal.AutomataKeyGen.GetKey(ref stringKey))
+                        {
+                            default: goto FAIL;
+                            case 75082159320914UL:
+                                ____result.RoomID = reader.ReadInt32();
+                                continue;
+                            case 75082242552661UL:
+                                ____result.UserID = reader.ReadInt32();
+                                continue;
+                        }
+                    case 9:
+                        if (!global::System.MemoryExtensions.SequenceEqual(stringKey, GetSpan_Timestamp().Slice(1))) { goto FAIL; }
 
-                        ____result.RoomID = reader.ReadInt32();
+                        ____result.Timestamp = reader.ReadInt64();
                         continue;
 
                 }

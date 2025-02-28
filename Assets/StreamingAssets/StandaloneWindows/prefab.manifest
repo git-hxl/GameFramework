@@ -1,31 +1,57 @@
 ManifestFileVersion: 0
-CRC: 3800877446
+CRC: 532264918
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: f66c6e0a09df9c79f492eac71c2e79cb
+    Hash: eb50043649762c19cd164944e0986d93
   TypeTreeHash:
     serializedVersion: 2
-    Hash: 708cded95b76e14d061a4965c51b5c42
+    Hash: 63c0c2a3b7ef49387bf6aaeb8de0cdf9
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: f66c6e0a09df9c79f492eac71c2e79cb
+    Hash: eb50043649762c19cd164944e0986d93
 HashAppended: 0
 ClassTypes:
 - Class: 1
   Script: {instanceID: 0}
+- Class: 4
+  Script: {instanceID: 0}
 - Class: 21
+  Script: {instanceID: 0}
+- Class: 23
   Script: {instanceID: 0}
 - Class: 28
   Script: {instanceID: 0}
+- Class: 33
+  Script: {instanceID: 0}
+- Class: 43
+  Script: {instanceID: 0}
 - Class: 48
   Script: {instanceID: 0}
+- Class: 54
+  Script: {instanceID: 0}
+- Class: 74
+  Script: {instanceID: 0}
+- Class: 90
+  Script: {instanceID: 0}
+- Class: 91
+  Script: {instanceID: 0}
+- Class: 95
+  Script: {instanceID: 0}
+- Class: 114
+  Script: {fileID: 11500000, guid: 0cd44c1031e13a943bb63640046fad76, type: 3}
 - Class: 114
   Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 36bd2c74472bdcd49bad01f4bef0f5be, type: 3}
 - Class: 114
   Script: {fileID: 11500000, guid: dc42784cf147c0c48a680349fa168899, type: 3}
 - Class: 114
   Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 5e658bfc1e524494b9e54a1c92d8c1e0, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 400941ecd4c58b94b8d85a62f4b857b1, type: 3}
 - Class: 114
   Script: {fileID: 11500000, guid: 9085046f02f69544eb97fd06b6048fe2, type: 3}
 - Class: 114
@@ -33,16 +59,24 @@ ClassTypes:
 - Class: 114
   Script: {fileID: 11500000, guid: 5f7201a12d95ffc409449d95f23cf332, type: 3}
 - Class: 114
-  Script: {fileID: 11500000, guid: 0cd44c1031e13a943bb63640046fad76, type: 3}
+  Script: {fileID: 11500000, guid: 5faf70b2337c15a4c9755d87e48ec10a, type: 3}
 - Class: 114
   Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
 - Class: 114
-  Script: {fileID: 11500000, guid: 36bd2c74472bdcd49bad01f4bef0f5be, type: 3}
+  Script: {fileID: 11500000, guid: 9001bcbd91e76437cb0f52f12764f2f0, type: 3}
 - Class: 114
   Script: {fileID: 11500000, guid: 1049f71bad5305341afdf19d4c69f268, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 26d6eff5f18a3414da909df937d16c56, type: 3}
 - Class: 115
   Script: {instanceID: 0}
 - Class: 128
+  Script: {instanceID: 0}
+- Class: 136
+  Script: {instanceID: 0}
+- Class: 137
+  Script: {instanceID: 0}
+- Class: 143
   Script: {instanceID: 0}
 - Class: 213
   Script: {instanceID: 0}
@@ -100,6 +134,8 @@ SerializeReferenceClassIdentifiers:
 - AssemblyName: UnityEngine.UI
   ClassName: UnityEngine.UI.Toggle/ToggleEvent
 Assets:
-- Assets/GameFramework/Example/UI/UITmp2.prefab
-- Assets/GameFramework/Example/UI/UITmp.prefab
+- Assets/Example/Net/Prefabs/unitychan 2.prefab
+- Assets/Example/UI/UITmp2.prefab
+- Assets/Example/Net/Prefabs/unitychan 1.prefab
+- Assets/Example/UI/UITmp.prefab
 Dependencies: []

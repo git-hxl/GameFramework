@@ -8,18 +8,14 @@ namespace GameFramework
     {
         private Queue<GameObject> references = new Queue<GameObject>();
 
-        private string poolName;
-
         private string assetPath;
 
         public int CurUsingRefCount { get; private set; }
 
         public int ReferencesCount { get { return references.Count; } }
 
-
-        public ObjectPoolCollection(string poolName, string assetPath)
+        public ObjectPoolCollection(string assetPath)
         {
-            this.poolName = poolName;
             this.assetPath = assetPath;
             CurUsingRefCount = 0;
         }
@@ -40,14 +36,6 @@ namespace GameFramework
                 var asset = ResourceManager.Instance.LoadAsset<GameObject>(assetPath);
 
                 gameObject = GameObject.Instantiate(asset);
-
-                PoolComponent poolComponent = gameObject.GetComponent<PoolComponent>();
-                if (poolComponent == null)
-                {
-                    poolComponent = gameObject.AddComponent<PoolComponent>();
-                }
-
-                poolComponent.Init(poolName);
             }
 
             gameObject.SetActive(true);
@@ -81,15 +69,6 @@ namespace GameFramework
                 GameObject gameObject = GameObject.Instantiate(asset);
 
                 gameObject.SetActive(false);
-
-                PoolComponent poolComponent = gameObject.GetComponent<PoolComponent>();
-                if (poolComponent == null)
-                {
-                    poolComponent = gameObject.AddComponent<PoolComponent>();
-                }
-
-                poolComponent.Init(poolName);
-
                 references.Enqueue(gameObject);
             }
         }

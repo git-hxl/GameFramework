@@ -20,7 +20,7 @@ namespace GameFramework
         /// <summary>
         /// 唯一性ID,作本机识别用
         /// </summary>
-        public int PlayerID { get; private set; }
+        public int UserID { get; private set; }
         protected override void OnDispose()
         {
             //throw new System.NotImplementedException();
@@ -55,9 +55,9 @@ namespace GameFramework
 
             Debug.Log("MessagePack Initialized");
         }
-        public void Connect(string ip, int port, int playerID)
+        public void Connect(string ip, int port, int userID)
         {
-            PlayerID = playerID;
+            UserID = userID;
 
             netManager.Start();
 
@@ -97,45 +97,76 @@ namespace GameFramework
         }
 #endif
 
+        public void SendRequest(OperationCode code, BaseRequest? baseRequest, DeliveryMethod deliveryMethod = DeliveryMethod.ReliableOrdered)
+        {
+            if (server == null)
+                return;
+
+            NetDataWriter netDataWriter = new NetDataWriter();
+
+            netDataWriter.Put((ushort)code);
+
+            if (baseRequest == null)
+            {
+                baseRequest = new BaseRequest();
+            }
+
+            baseRequest.UserID = UserID;
+            baseRequest.Timestamp = DateTimeUtil.TimeStamp;
+
+            Type type = baseRequest.GetType();
+
+            byte[] data = MessagePackSerializer.Serialize(type, baseRequest);
+
+            netDataWriter.Put(data);
+
+            server.Send(netDataWriter, deliveryMethod);
+        }
+
+
         private void Listener_NetworkReceiveEvent(NetPeer peer, NetPacketReader reader, byte channel, DeliveryMethod deliveryMethod)
         {
             try
             {
-                Response response = MessagePackSerializer.Deserialize<Response>(reader.GetRemainingBytes());
+                OperationCode operationCode = (OperationCode)reader.GetUShort();
 
-                Debug.Log($"接收数据：{response.OperationCode} {response.ReturnCode} {response.ErrorMsg} 延迟：{DateTimeUtil.TimeStamp - response.Timestamp} ping：{peer.Ping}");
+                ReturnCode returnCode = (ReturnCode)reader.GetUShort();
 
-                if (response.ReturnCode != ReturnCode.Success)
+                Debug.Log(string.Format("接收请求：{0} return {1} ping {2}", operationCode, returnCode, peer.Ping));
+
+                byte[] data = reader.GetRemainingBytes();
+
+                if (returnCode != ReturnCode.Success)
                 {
                     return;
                 }
 
-                switch (response.OperationCode)
+                switch (operationCode)
                 {
                     case OperationCode.Login:
                         break;
                     case OperationCode.Register:
                         break;
                     case OperationCode.JoinRoom:
-                        OnJoinRoom(response, deliveryMethod);
+                        OnJoinRoom(data, deliveryMethod);
                         break;
                     case OperationCode.LeaveRoom:
-                        OnLeaveRoom(response, deliveryMethod);
+                        OnLeaveRoom(data, deliveryMethod);
                         break;
 
                     case OperationCode.UpdateRoomInfo:
-                        OnUpdateRoomInfo(response, deliveryMethod);
+                        OnUpdateRoomInfo(data, deliveryMethod);
                         break;
                     case OperationCode.UpdatePlayerInfo:
-                        OnUpdatePlayerInfo(response, deliveryMethod);
+                        OnUpdatePlayerInfo(data, deliveryMethod);
                         break;
 
 
                     case OperationCode.SyncEvent:
-                        OnSyncEvent(response, deliveryMethod);
+                        OnSyncEvent(data, deliveryMethod);
                         break;
                     default:
-                        Debug.LogError("不存在的操作码:" + response.OperationCode);
+                        Debug.LogError("不存在的操作码:" + operationCode);
                         break;
                 }
             }
@@ -164,43 +195,64 @@ namespace GameFramework
             Debug.Log(string.Format("OnConnectionRequest {0} {1}", request.RemoteEndPoint.ToString(), request.Data.GetString()));
         }
 
-        private void OnJoinRoom(Response response, DeliveryMethod deliveryMethod)
+        private void OnJoinRoom(byte[] data, DeliveryMethod deliveryMethod)
         {
-            JoinRoomResponse joinRoomResponse = MessagePackSerializer.Deserialize<JoinRoomResponse>(response.Data);
+            JoinRoomResponse joinRoomResponse = MessagePackSerializer.Deserialize<JoinRoomResponse>(data);
             OnJoinRoomEvent?.Invoke(joinRoomResponse);
         }
 
 
-        private void OnLeaveRoom(Response response, DeliveryMethod deliveryMethod)
+        private void OnLeaveRoom(byte[] data, DeliveryMethod deliveryMethod)
         {
-            LeaveRoomResponse leaveRoomResponse = MessagePackSerializer.Deserialize<LeaveRoomResponse>(response.Data);
+            LeaveRoomResponse leaveRoomResponse = MessagePackSerializer.Deserialize<LeaveRoomResponse>(data);
             OnLeaveRoomEvent?.Invoke(leaveRoomResponse);
         }
 
 
-        private void OnUpdatePlayerInfo(Response response, DeliveryMethod deliveryMethod)
+        private void OnUpdatePlayerInfo(byte[] data, DeliveryMethod deliveryMethod)
         {
-            PlayerInfo playerInfo = MessagePackSerializer.Deserialize<PlayerInfo>(response.Data);
-            OnUpdatePlayerInfoEvent?.Invoke(playerInfo);
+            UserInfo userInfo = MessagePackSerializer.Deserialize<UserInfo>(data);
+            OnUpdatePlayerInfoEvent?.Invoke(userInfo);
         }
 
-        private void OnUpdateRoomInfo(Response response, DeliveryMethod deliveryMethod)
+        private void OnUpdateRoomInfo(byte[] data, DeliveryMethod deliveryMethod)
         {
-            RoomInfo roomInfo = MessagePackSerializer.Deserialize<RoomInfo>(response.Data);
+            RoomInfo roomInfo = MessagePackSerializer.Deserialize<RoomInfo>(data);
             OnUpdateRoomInfoEvent?.Invoke(roomInfo);
         }
 
-        private void OnSyncEvent(Response response, DeliveryMethod deliveryMethod)
+        private void OnSyncEvent(byte[] data, DeliveryMethod deliveryMethod)
         {
-            SyncEventRequest syncRequestData = MessagePackSerializer.Deserialize<SyncEventRequest>(response.Data);
+            SyncRequest syncRequest = MessagePackSerializer.Deserialize<SyncRequest>(data);
 
-            OnSyncRequestEvent?.Invoke(response.Timestamp, syncRequestData);
+            OnSyncRequestEvent?.Invoke(syncRequest);
 
-            switch (syncRequestData.SyncEventCode)
+            switch (syncRequest.SyncCode)
             {
+                case SyncCode.SyncSpawnObject:
+                    ObjectData objectData = MessagePackSerializer.Deserialize<ObjectData>(syncRequest.SyncData);
 
+                    OnSyncSpawnObjectEvent(syncRequest, objectData);
+                    break;
+
+                case SyncCode.SyncRemoveObject:
+                    objectData = MessagePackSerializer.Deserialize<ObjectData>(syncRequest.SyncData);
+
+                    OnSyncRemoveObjectEvent(syncRequest, objectData);
+                    break;
+
+                case SyncCode.SyncTransform:
+                    TransformData transformData = MessagePackSerializer.Deserialize<TransformData>(syncRequest.SyncData);
+
+                    OnSyncTransformEvent(syncRequest, transformData);
+                    break;
+
+                case SyncCode.SyncAnimation:
+                    AnimationData animationData = MessagePackSerializer.Deserialize<AnimationData>(syncRequest.SyncData);
+
+                    OnSyncAnimationEvent(syncRequest, animationData);
+                    break;
             }
-
         }
 
     }

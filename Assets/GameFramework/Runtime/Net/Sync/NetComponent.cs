@@ -6,19 +6,66 @@ namespace GameFramework
 {
     public class NetComponent : MonoBehaviour
     {
-        public int PlayerID { get; private set; }
-        public int ObjectID { get; private set; }
+        [SerializeField]
+        private int playerID;
+        [SerializeField]
+        private int objectID;
 
-        public bool IsLocal { get; set; }
+        [SerializeField]
+        private bool isLocal;
+
+        public int PlayerID { get { return playerID; } }
+        public int ObjectID { get { return objectID; } }
+        public bool IsLocal { get { return isLocal; } }
 
 
+        private SyncTransform syncTransform;
+        private SyncAnimation syncAnimation;
         public void Init(int playerID, int objectID, bool isLocal)
         {
-            PlayerID = playerID;
+            this.playerID = playerID;
+            this.objectID = objectID;
+            this.isLocal = isLocal;
+        }
 
-            ObjectID = objectID;
+        private void OnEnable()
+        {
+            NetManager.Instance.OnSyncTransformEvent += Instance_OnSyncTransformEvent;
 
-            IsLocal = isLocal;
+            NetManager.Instance.OnSyncAnimationEvent += Instance_OnSyncAnimationEvent;
+
+            syncTransform = GetComponent<SyncTransform>();
+            syncAnimation = GetComponent<SyncAnimation>();
+        }
+
+        private void Instance_OnSyncAnimationEvent(GameServer.Protocol.SyncRequest arg1, GameServer.Protocol.AnimationData arg2)
+        {
+            if (isLocal == false && arg2.ObjectID == this.ObjectID)
+            {
+                if (syncAnimation != null)
+                {
+                    syncAnimation.EnqueueData(arg2);
+                }
+            }
+        }
+
+        private void Instance_OnSyncTransformEvent(GameServer.Protocol.SyncRequest arg1, GameServer.Protocol.TransformData arg2)
+        {
+            if (isLocal == false && arg2.ObjectID == this.ObjectID)
+            {
+                if (syncTransform != null)
+                {
+                    syncTransform.EnqueueData(arg2);
+                }
+            }
+        }
+
+
+        private void OnDisable()
+        {
+            NetManager.Instance.OnSyncTransformEvent -= Instance_OnSyncTransformEvent;
+
+            NetManager.Instance.OnSyncAnimationEvent -= Instance_OnSyncAnimationEvent;
         }
     }
 }

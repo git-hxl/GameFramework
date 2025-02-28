@@ -29,54 +29,55 @@ namespace GameFramework
             referenceCollections.Clear();
         }
 
-        public GameObject Acquire(string poolName)
+        public GameObject Acquire(string assetPath)
         {
-            return GetReferenceCollection(poolName).Acquire();
+            return GetReferenceCollection(assetPath).Acquire();
         }
 
-        public void Release(GameObject reference)
+        public void Release(string assetPath, GameObject reference)
         {
-            PoolComponent poolComponent = reference.GetComponent<PoolComponent>();
-
-            if (poolComponent != null)
-            {
-                GetReferenceCollection(poolComponent.PoolName).Release(reference);
-            }
+            GetReferenceCollection(assetPath).Release(reference);
         }
 
-        public void Add(string poolName, int count)
+        public void Add(string assetPath, int count)
         {
-            GetReferenceCollection(poolName).Add(count);
+            GetReferenceCollection(assetPath).Add(count);
         }
 
-        public void Remove(string poolName, int count)
+        public void Remove(string assetPath, int count)
         {
-            GetReferenceCollection(poolName).Remove(count);
+            GetReferenceCollection(assetPath).Remove(count);
         }
 
-        public void RemoveAll(string poolName)
+        public void RemoveAll(string assetPath)
         {
-            GetReferenceCollection(poolName).RemoveAll();
+            GetReferenceCollection(assetPath).RemoveAll();
         }
 
-        private ObjectPoolCollection GetReferenceCollection(string poolName)
+        private ObjectPoolCollection GetReferenceCollection(string assetPath)
         {
             ObjectPoolCollection referenceCollection = null;
-            referenceCollections.TryGetValue(poolName, out referenceCollection);
+            referenceCollections.TryGetValue(assetPath, out referenceCollection);
+
+            if (referenceCollection == null)
+            {
+                return CreateReferenceCollection(assetPath);
+            }
+
             return referenceCollection;
         }
 
-        public ObjectPoolCollection CreateReferenceCollection(string poolName, string assetPath)
+        public ObjectPoolCollection CreateReferenceCollection(string assetPath)
         {
-            if (referenceCollections.ContainsKey(poolName))
+            if (referenceCollections.ContainsKey(assetPath))
             {
-                Debug.LogError("对象池已存在：" + poolName);
+                Debug.LogError("对象池已存在：" + assetPath);
 
                 return null;
             }
 
-            ObjectPoolCollection referenceCollection = new ObjectPoolCollection(poolName, assetPath);
-            referenceCollections.Add(poolName, referenceCollection);
+            ObjectPoolCollection referenceCollection = new ObjectPoolCollection(assetPath);
+            referenceCollections.Add(assetPath, referenceCollection);
 
             return referenceCollection;
         }

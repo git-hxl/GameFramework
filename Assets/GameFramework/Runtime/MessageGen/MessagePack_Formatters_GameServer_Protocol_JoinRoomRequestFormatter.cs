@@ -20,10 +20,12 @@ namespace MessagePack.Formatters.GameServer.Protocol
     {
         // RoomID
         private static global::System.ReadOnlySpan<byte> GetSpan_RoomID() => new byte[1 + 6] { 166, 82, 111, 111, 109, 73, 68 };
-        // PlayerID
-        private static global::System.ReadOnlySpan<byte> GetSpan_PlayerID() => new byte[1 + 8] { 168, 80, 108, 97, 121, 101, 114, 73, 68 };
-        // PlayeInfo
-        private static global::System.ReadOnlySpan<byte> GetSpan_PlayeInfo() => new byte[1 + 9] { 169, 80, 108, 97, 121, 101, 73, 110, 102, 111 };
+        // UserInfo
+        private static global::System.ReadOnlySpan<byte> GetSpan_UserInfo() => new byte[1 + 8] { 168, 85, 115, 101, 114, 73, 110, 102, 111 };
+        // UserID
+        private static global::System.ReadOnlySpan<byte> GetSpan_UserID() => new byte[1 + 6] { 166, 85, 115, 101, 114, 73, 68 };
+        // Timestamp
+        private static global::System.ReadOnlySpan<byte> GetSpan_Timestamp() => new byte[1 + 9] { 169, 84, 105, 109, 101, 115, 116, 97, 109, 112 };
 
         public void Serialize(ref global::MessagePack.MessagePackWriter writer, global::GameServer.Protocol.JoinRoomRequest value, global::MessagePack.MessagePackSerializerOptions options)
         {
@@ -34,13 +36,15 @@ namespace MessagePack.Formatters.GameServer.Protocol
             }
 
             var formatterResolver = options.Resolver;
-            writer.WriteMapHeader(3);
+            writer.WriteMapHeader(4);
             writer.WriteRaw(GetSpan_RoomID());
             writer.Write(value.RoomID);
-            writer.WriteRaw(GetSpan_PlayerID());
-            writer.Write(value.PlayerID);
-            writer.WriteRaw(GetSpan_PlayeInfo());
-            global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::GameServer.Protocol.PlayerInfo>(formatterResolver).Serialize(ref writer, value.PlayeInfo, options);
+            writer.WriteRaw(GetSpan_UserInfo());
+            global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::GameServer.Protocol.UserInfo>(formatterResolver).Serialize(ref writer, value.UserInfo, options);
+            writer.WriteRaw(GetSpan_UserID());
+            writer.Write(value.UserID);
+            writer.WriteRaw(GetSpan_Timestamp());
+            writer.Write(value.Timestamp);
         }
 
         public global::GameServer.Protocol.JoinRoomRequest Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
@@ -65,19 +69,25 @@ namespace MessagePack.Formatters.GameServer.Protocol
                       reader.Skip();
                       continue;
                     case 6:
-                        if (global::MessagePack.Internal.AutomataKeyGen.GetKey(ref stringKey) != 75082159320914UL) { goto FAIL; }
-
-                        ____result.RoomID = reader.ReadInt32();
-                        continue;
+                        switch (global::MessagePack.Internal.AutomataKeyGen.GetKey(ref stringKey))
+                        {
+                            default: goto FAIL;
+                            case 75082159320914UL:
+                                ____result.RoomID = reader.ReadInt32();
+                                continue;
+                            case 75082242552661UL:
+                                ____result.UserID = reader.ReadInt32();
+                                continue;
+                        }
                     case 8:
-                        if (global::MessagePack.Internal.AutomataKeyGen.GetKey(ref stringKey) != 4920589848032668752UL) { goto FAIL; }
+                        if (global::MessagePack.Internal.AutomataKeyGen.GetKey(ref stringKey) != 8027224647565407061UL) { goto FAIL; }
 
-                        ____result.PlayerID = reader.ReadInt32();
+                        ____result.UserInfo = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::GameServer.Protocol.UserInfo>(formatterResolver).Deserialize(ref reader, options);
                         continue;
                     case 9:
-                        if (!global::System.MemoryExtensions.SequenceEqual(stringKey, GetSpan_PlayeInfo().Slice(1))) { goto FAIL; }
+                        if (!global::System.MemoryExtensions.SequenceEqual(stringKey, GetSpan_Timestamp().Slice(1))) { goto FAIL; }
 
-                        ____result.PlayeInfo = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<global::GameServer.Protocol.PlayerInfo>(formatterResolver).Deserialize(ref reader, options);
+                        ____result.Timestamp = reader.ReadInt64();
                         continue;
 
                 }

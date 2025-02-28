@@ -47,32 +47,30 @@ namespace MessagePack.Resolvers
 
         static GeneratedResolverGetFormatterHelper()
         {
-            lookup = new global::System.Collections.Generic.Dictionary<global::System.Type, int>(24)
+            lookup = new global::System.Collections.Generic.Dictionary<global::System.Type, int>(22)
             {
                 { typeof(global::System.Collections.Generic.Dictionary<int, bool>), 0 },
                 { typeof(global::System.Collections.Generic.Dictionary<int, float>), 1 },
                 { typeof(global::System.Collections.Generic.Dictionary<int, int>), 2 },
-                { typeof(global::System.Collections.Generic.List<global::GameServer.Protocol.PlayerInfo>), 3 },
-                { typeof(global::GameServer.OperationCode), 4 },
-                { typeof(global::GameServer.ReturnCode), 5 },
-                { typeof(global::GameServer.SyncEventCode), 6 },
-                { typeof(global::GameServer.Protocol.CloseRoomRequest), 7 },
-                { typeof(global::GameServer.Protocol.CreateRoomRequest), 8 },
-                { typeof(global::GameServer.Protocol.CreateRoomResponse), 9 },
-                { typeof(global::GameServer.Protocol.JoinRoomRequest), 10 },
-                { typeof(global::GameServer.Protocol.JoinRoomResponse), 11 },
-                { typeof(global::GameServer.Protocol.LeaveRoomRequest), 12 },
-                { typeof(global::GameServer.Protocol.LeaveRoomResponse), 13 },
-                { typeof(global::GameServer.Protocol.LoginRequest), 14 },
-                { typeof(global::GameServer.Protocol.LoginResponse), 15 },
-                { typeof(global::GameServer.Protocol.PlayerInfo), 16 },
-                { typeof(global::GameServer.Protocol.Request), 17 },
-                { typeof(global::GameServer.Protocol.Response), 18 },
-                { typeof(global::GameServer.Protocol.RoomInfo), 19 },
-                { typeof(global::GameServer.Protocol.SyncAnimationData), 20 },
-                { typeof(global::GameServer.Protocol.SyncEventRequest), 21 },
-                { typeof(global::GameServer.Protocol.SyncObjectData), 22 },
-                { typeof(global::GameServer.Protocol.SyncTransformData), 23 },
+                { typeof(global::System.Collections.Generic.List<global::GameServer.Protocol.UserInfo>), 3 },
+                { typeof(global::GameServer.SyncCode), 4 },
+                { typeof(global::GameServer.Protocol.AnimationData), 5 },
+                { typeof(global::GameServer.Protocol.BaseRequest), 6 },
+                { typeof(global::GameServer.Protocol.BaseResponse), 7 },
+                { typeof(global::GameServer.Protocol.CloseRoomRequest), 8 },
+                { typeof(global::GameServer.Protocol.CreateRoomRequest), 9 },
+                { typeof(global::GameServer.Protocol.CreateRoomResponse), 10 },
+                { typeof(global::GameServer.Protocol.JoinRoomRequest), 11 },
+                { typeof(global::GameServer.Protocol.JoinRoomResponse), 12 },
+                { typeof(global::GameServer.Protocol.LeaveRoomRequest), 13 },
+                { typeof(global::GameServer.Protocol.LeaveRoomResponse), 14 },
+                { typeof(global::GameServer.Protocol.LoginRequest), 15 },
+                { typeof(global::GameServer.Protocol.LoginResponse), 16 },
+                { typeof(global::GameServer.Protocol.ObjectData), 17 },
+                { typeof(global::GameServer.Protocol.RoomInfo), 18 },
+                { typeof(global::GameServer.Protocol.SyncRequest), 19 },
+                { typeof(global::GameServer.Protocol.TransformData), 20 },
+                { typeof(global::GameServer.Protocol.UserInfo), 21 },
             };
         }
 
@@ -89,27 +87,25 @@ namespace MessagePack.Resolvers
                 case 0: return new global::MessagePack.Formatters.DictionaryFormatter<int, bool>();
                 case 1: return new global::MessagePack.Formatters.DictionaryFormatter<int, float>();
                 case 2: return new global::MessagePack.Formatters.DictionaryFormatter<int, int>();
-                case 3: return new global::MessagePack.Formatters.ListFormatter<global::GameServer.Protocol.PlayerInfo>();
-                case 4: return new MessagePack.Formatters.GameServer.OperationCodeFormatter();
-                case 5: return new MessagePack.Formatters.GameServer.ReturnCodeFormatter();
-                case 6: return new MessagePack.Formatters.GameServer.SyncEventCodeFormatter();
-                case 7: return new MessagePack.Formatters.GameServer.Protocol.CloseRoomRequestFormatter();
-                case 8: return new MessagePack.Formatters.GameServer.Protocol.CreateRoomRequestFormatter();
-                case 9: return new MessagePack.Formatters.GameServer.Protocol.CreateRoomResponseFormatter();
-                case 10: return new MessagePack.Formatters.GameServer.Protocol.JoinRoomRequestFormatter();
-                case 11: return new MessagePack.Formatters.GameServer.Protocol.JoinRoomResponseFormatter();
-                case 12: return new MessagePack.Formatters.GameServer.Protocol.LeaveRoomRequestFormatter();
-                case 13: return new MessagePack.Formatters.GameServer.Protocol.LeaveRoomResponseFormatter();
-                case 14: return new MessagePack.Formatters.GameServer.Protocol.LoginRequestFormatter();
-                case 15: return new MessagePack.Formatters.GameServer.Protocol.LoginResponseFormatter();
-                case 16: return new MessagePack.Formatters.GameServer.Protocol.PlayerInfoFormatter();
-                case 17: return new MessagePack.Formatters.GameServer.Protocol.RequestFormatter();
-                case 18: return new MessagePack.Formatters.GameServer.Protocol.ResponseFormatter();
-                case 19: return new MessagePack.Formatters.GameServer.Protocol.RoomInfoFormatter();
-                case 20: return new MessagePack.Formatters.GameServer.Protocol.SyncAnimationDataFormatter();
-                case 21: return new MessagePack.Formatters.GameServer.Protocol.SyncEventRequestFormatter();
-                case 22: return new MessagePack.Formatters.GameServer.Protocol.SyncObjectDataFormatter();
-                case 23: return new MessagePack.Formatters.GameServer.Protocol.SyncTransformDataFormatter();
+                case 3: return new global::MessagePack.Formatters.ListFormatter<global::GameServer.Protocol.UserInfo>();
+                case 4: return new MessagePack.Formatters.GameServer.SyncCodeFormatter();
+                case 5: return new MessagePack.Formatters.GameServer.Protocol.AnimationDataFormatter();
+                case 6: return new MessagePack.Formatters.GameServer.Protocol.BaseRequestFormatter();
+                case 7: return new MessagePack.Formatters.GameServer.Protocol.BaseResponseFormatter();
+                case 8: return new MessagePack.Formatters.GameServer.Protocol.CloseRoomRequestFormatter();
+                case 9: return new MessagePack.Formatters.GameServer.Protocol.CreateRoomRequestFormatter();
+                case 10: return new MessagePack.Formatters.GameServer.Protocol.CreateRoomResponseFormatter();
+                case 11: return new MessagePack.Formatters.GameServer.Protocol.JoinRoomRequestFormatter();
+                case 12: return new MessagePack.Formatters.GameServer.Protocol.JoinRoomResponseFormatter();
+                case 13: return new MessagePack.Formatters.GameServer.Protocol.LeaveRoomRequestFormatter();
+                case 14: return new MessagePack.Formatters.GameServer.Protocol.LeaveRoomResponseFormatter();
+                case 15: return new MessagePack.Formatters.GameServer.Protocol.LoginRequestFormatter();
+                case 16: return new MessagePack.Formatters.GameServer.Protocol.LoginResponseFormatter();
+                case 17: return new MessagePack.Formatters.GameServer.Protocol.ObjectDataFormatter();
+                case 18: return new MessagePack.Formatters.GameServer.Protocol.RoomInfoFormatter();
+                case 19: return new MessagePack.Formatters.GameServer.Protocol.SyncRequestFormatter();
+                case 20: return new MessagePack.Formatters.GameServer.Protocol.TransformDataFormatter();
+                case 21: return new MessagePack.Formatters.GameServer.Protocol.UserInfoFormatter();
                 default: return null;
             }
         }

@@ -18,10 +18,10 @@ namespace MessagePack.Formatters.GameServer.Protocol
 {
     public sealed class LoginResponseFormatter : global::MessagePack.Formatters.IMessagePackFormatter<global::GameServer.Protocol.LoginResponse>
     {
-        // ID
-        private static global::System.ReadOnlySpan<byte> GetSpan_ID() => new byte[1 + 2] { 162, 73, 68 };
-        // ServerTime
-        private static global::System.ReadOnlySpan<byte> GetSpan_ServerTime() => new byte[1 + 10] { 170, 83, 101, 114, 118, 101, 114, 84, 105, 109, 101 };
+        // ErrorMsg
+        private static global::System.ReadOnlySpan<byte> GetSpan_ErrorMsg() => new byte[1 + 8] { 168, 69, 114, 114, 111, 114, 77, 115, 103 };
+        // Timestamp
+        private static global::System.ReadOnlySpan<byte> GetSpan_Timestamp() => new byte[1 + 9] { 169, 84, 105, 109, 101, 115, 116, 97, 109, 112 };
 
         public void Serialize(ref global::MessagePack.MessagePackWriter writer, global::GameServer.Protocol.LoginResponse value, global::MessagePack.MessagePackSerializerOptions options)
         {
@@ -31,11 +31,12 @@ namespace MessagePack.Formatters.GameServer.Protocol
                 return;
             }
 
+            var formatterResolver = options.Resolver;
             writer.WriteMapHeader(2);
-            writer.WriteRaw(GetSpan_ID());
-            writer.Write(value.ID);
-            writer.WriteRaw(GetSpan_ServerTime());
-            writer.Write(value.ServerTime);
+            writer.WriteRaw(GetSpan_ErrorMsg());
+            global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<string>(formatterResolver).Serialize(ref writer, value.ErrorMsg, options);
+            writer.WriteRaw(GetSpan_Timestamp());
+            writer.Write(value.Timestamp);
         }
 
         public global::GameServer.Protocol.LoginResponse Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
@@ -46,6 +47,7 @@ namespace MessagePack.Formatters.GameServer.Protocol
             }
 
             options.Security.DepthStep(ref reader);
+            var formatterResolver = options.Resolver;
             var length = reader.ReadMapHeader();
             var ____result = new global::GameServer.Protocol.LoginResponse();
 
@@ -58,15 +60,15 @@ namespace MessagePack.Formatters.GameServer.Protocol
                     FAIL:
                       reader.Skip();
                       continue;
-                    case 2:
-                        if (global::MessagePack.Internal.AutomataKeyGen.GetKey(ref stringKey) != 17481UL) { goto FAIL; }
+                    case 8:
+                        if (global::MessagePack.Internal.AutomataKeyGen.GetKey(ref stringKey) != 7454386962119684677UL) { goto FAIL; }
 
-                        ____result.ID = reader.ReadInt32();
+                        ____result.ErrorMsg = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<string>(formatterResolver).Deserialize(ref reader, options);
                         continue;
-                    case 10:
-                        if (!global::System.MemoryExtensions.SequenceEqual(stringKey, GetSpan_ServerTime().Slice(1))) { goto FAIL; }
+                    case 9:
+                        if (!global::System.MemoryExtensions.SequenceEqual(stringKey, GetSpan_Timestamp().Slice(1))) { goto FAIL; }
 
-                        ____result.ServerTime = reader.ReadInt64();
+                        ____result.Timestamp = reader.ReadInt64();
                         continue;
 
                 }

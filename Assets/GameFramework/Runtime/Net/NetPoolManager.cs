@@ -1,9 +1,9 @@
 
-using GameServer.Protocol;
-using GameServer;
 using MessagePack;
 using UnityEngine;
 using System.Collections.Generic;
+using GameServer.Protocol;
+using GameServer;
 using System;
 
 
@@ -11,164 +11,135 @@ namespace GameFramework
 {
     public class NetPoolManager : Singleton<NetPoolManager>
     {
-        private Dictionary<int, Dictionary<int, NetComponent>> netObjects = new Dictionary<int, Dictionary<int, NetComponent>>();
+        private Dictionary<int, GameObject> spawnObjects = new Dictionary<int, GameObject>();
+
         protected override void OnInit()
         {
-            //throw new System.NotImplementedException();
-            NetManager.Instance.OnSyncRequestEvent += Instance_OnSyncRequestEvent;
+            NetManager.Instance.OnSyncSpawnObjectEvent += Instance_OnSyncSpawnObjectEvent;
+
+            NetManager.Instance.OnSyncRemoveObjectEvent += Instance_OnSyncRemoveObjectEvent;
+        }
+
+        private void Instance_OnSyncRemoveObjectEvent(SyncRequest arg1, ObjectData arg2)
+        {
+            RemoveObject(arg2.AssetPath, arg2.ObjectID);
+        }
+
+        private void Instance_OnSyncSpawnObjectEvent(SyncRequest arg1, ObjectData arg2)
+        {
+            if (arg1.UserID == NetManager.Instance.UserID)
+            {
+                //return;
+            }
+
+            SpawnObject(arg2.AssetPath, arg1.UserID, arg2.ObjectID, false);
         }
 
         protected override void OnDispose()
         {
-            // throw new System.NotImplementedException();
+            NetManager.Instance.OnSyncSpawnObjectEvent -= Instance_OnSyncSpawnObjectEvent;
 
-            netObjects.Clear();
+            NetManager.Instance.OnSyncRemoveObjectEvent -= Instance_OnSyncRemoveObjectEvent;
         }
 
-        public NetComponent SpawnLocalObject(string poolName)
+        /// <summary>
+        /// 生成网络对象
+        /// </summary>
+        /// <param name="assetPath"></param>
+        /// <param name="playerID"></param>
+        /// <param name="objectID"></param>
+        /// <param name="isLocal"></param>
+        /// <returns></returns>
+        public NetComponent SpawnObject(string assetPath, int playerID, int objectID = -1, bool isLocal = false)
         {
-            GameObject gameObject = ObjectPoolManager.Instance.Acquire(poolName);
+            if (spawnObjects.ContainsKey(objectID))
+            {
+                Debug.LogError("网络对象添加异常，id已存在！！！");
+                //return null;
+            }
+
+            GameObject gameObject = ObjectPoolManager.Instance.Acquire(assetPath);
             NetComponent netComponent = gameObject.GetComponent<NetComponent>();
             if (netComponent == null)
             {
                 netComponent = gameObject.AddComponent<NetComponent>();
             }
+            if (objectID == -1)
+                objectID = gameObject.GetInstanceID();
+            if (isLocal)
+            {
+                ObjectData objectData = new ObjectData();
 
-            int objectID = gameObject.GetInstanceID();
+                objectData.ObjectID = objectID;
+                objectData.AssetPath = assetPath;
 
-            netComponent.Init(NetManager.Instance.PlayerID, objectID, true);
+                SyncRequest syncRequest = new SyncRequest();
 
-            gameObject.name = NetManager.Instance.PlayerID.ToString();
-            SyncObjectData syncObjectData = new SyncObjectData();
-            syncObjectData.PlayerID = NetManager.Instance.PlayerID;
-            syncObjectData.ObjectID = objectID;
-            syncObjectData.PoolName = poolName + "_Remote";
-            syncObjectData.Active = true;
+                syncRequest.SyncCode = GameServer.SyncCode.SyncSpawnObject;
 
-            byte[] data = MessagePackSerializer.Serialize(syncObjectData);
+                syncRequest.SyncData = MessagePackSerializer.Serialize(objectData);
 
-            NetManager.Instance.Server.SendSyncEvent(NetManager.Instance.PlayerID, SyncEventCode.SyncObject, data, LiteNetLib.DeliveryMethod.ReliableOrdered);
+                NetManager.Instance.SendRequest(OperationCode.SyncEvent, syncRequest, LiteNetLib.DeliveryMethod.ReliableOrdered);
+            }
 
+            if (!spawnObjects.ContainsKey(objectID))
+            {
+                spawnObjects.Add(objectID, gameObject);
+            }
+            netComponent.Init(playerID, objectID, isLocal);
             return netComponent;
         }
 
-        public void SpawnRemoteObject(SyncObjectData syncObjectData)
+        /// <summary>
+        /// 移除网络对象
+        /// </summary>
+        /// <param name="assetPath"></param>
+        /// <param name="gameObject"></param>
+        public void RemoveObject(string assetPath, GameObject gameObject)
         {
-            string poolName = syncObjectData.PoolName;
-            GameObject gameObject = ObjectPoolManager.Instance.Acquire(poolName);
+            if (gameObject == null)
+                return;
+
             NetComponent netComponent = gameObject.GetComponent<NetComponent>();
             if (netComponent == null)
             {
-                netComponent = gameObject.AddComponent<NetComponent>();
+                Debug.LogError("NetComponent 不存在！！！");
+                return;
             }
-
-            netComponent.Init(syncObjectData.PlayerID, syncObjectData.ObjectID, false);
-
-            if (!netObjects.ContainsKey(syncObjectData.PlayerID))
-            {
-                netObjects.Add(syncObjectData.PlayerID, new Dictionary<int, NetComponent>());
-            }
-
-            netObjects[syncObjectData.PlayerID][netComponent.ObjectID] = netComponent;
-
-            netComponent.gameObject.name = syncObjectData.PlayerID + "_Remote";
-        }
-
-        public void RemoveLocalObject(NetComponent netComponent)
-        {
             if (netComponent.IsLocal)
             {
-                PoolComponent poolComponent = netComponent.GetComponent<PoolComponent>();
-                SyncObjectData syncObjectData = new SyncObjectData();
-                syncObjectData.PlayerID = NetManager.Instance.PlayerID;
-                syncObjectData.ObjectID = netComponent.ObjectID;
-                syncObjectData.PoolName = poolComponent.PoolName;
-                syncObjectData.Active = false;
+                ObjectData objectData = new ObjectData();
 
-                byte[] data = MessagePackSerializer.Serialize(syncObjectData);
+                objectData.ObjectID = netComponent.ObjectID;
+                objectData.AssetPath = assetPath;
 
-                NetManager.Instance.Server.SendSyncEvent(NetManager.Instance.PlayerID, SyncEventCode.SyncObject, data, LiteNetLib.DeliveryMethod.ReliableOrdered);
+                SyncRequest syncRequest = new SyncRequest();
+
+                syncRequest.SyncCode = GameServer.SyncCode.SyncRemoveObject;
+
+                syncRequest.SyncData = MessagePackSerializer.Serialize(objectData);
+
+                NetManager.Instance.SendRequest(OperationCode.SyncEvent, syncRequest, LiteNetLib.DeliveryMethod.ReliableOrdered);
             }
 
-            ObjectPoolManager.Instance.Release(netComponent.gameObject);
+            if (spawnObjects.ContainsKey(netComponent.ObjectID))
+            {
+                spawnObjects.Remove(netComponent.ObjectID);
+            }
+
+            ObjectPoolManager.Instance.Release(assetPath, gameObject);
         }
 
-        public void RemoveRemoteObject(SyncObjectData syncObjectData)
+        public void RemoveObject(string assetPath, int objectID)
         {
-            var netComponent = GetObject(syncObjectData.PlayerID, syncObjectData.ObjectID);
-
-            if (netComponent == null)
+            if (!spawnObjects.ContainsKey(objectID))
+            {
+                Debug.LogError("网络对象移除异常，id不存在！！！");
                 return;
-
-            if (netObjects.ContainsKey(netComponent.PlayerID))
-            {
-                if (netObjects[netComponent.PlayerID].ContainsKey(netComponent.ObjectID))
-                {
-                    netObjects[netComponent.PlayerID].Remove(netComponent.ObjectID);
-                }
             }
+            GameObject gameObject = spawnObjects[objectID];
 
-            ObjectPoolManager.Instance.Release(netComponent.gameObject);
-        }
-
-
-        public NetComponent GetObject(int playerID, int objectID)
-        {
-            if (netObjects.ContainsKey(playerID))
-            {
-                if (netObjects[playerID].ContainsKey(objectID))
-                { return netObjects[playerID][objectID]; }
-            }
-            return null;
-        }
-
-        private void Instance_OnSyncRequestEvent(long timestamp, SyncEventRequest syncRequestData)
-        {
-            NetComponent netComponent = null;
-            switch (syncRequestData.SyncEventCode)
-            {
-                case SyncEventCode.SyncObject:
-
-                    SyncObjectData syncObjectData = MessagePackSerializer.Deserialize<SyncObjectData>(syncRequestData.SyncData);
-
-                    if (syncObjectData.Active)
-                    {
-                        SpawnRemoteObject(syncObjectData);
-                    }
-                    else
-                    {
-                        RemoveRemoteObject(syncObjectData);
-                    }
-                    break;
-
-                case SyncEventCode.SyncTransform:
-                    SyncTransformData syncTransformData = MessagePackSerializer.Deserialize<SyncTransformData>(syncRequestData.SyncData);
-
-                    netComponent = GetObject(syncRequestData.PlayerID, syncTransformData.ObjectID);
-
-                    if (netComponent == null)
-                        return;
-
-                    SyncTransform syncTransform = netComponent.GetComponent<SyncTransform>();
-
-                    syncTransform.AddSnapshot(timestamp, syncTransformData);
-
-                    break;
-
-                case SyncEventCode.SyncAnimation:
-
-                    SyncAnimationData syncAnimationData = MessagePackSerializer.Deserialize<SyncAnimationData>(syncRequestData.SyncData);
-
-                    netComponent = GetObject(syncRequestData.PlayerID, syncAnimationData.ObjectID);
-
-                    if (netComponent == null)
-                        return;
-
-                    SyncAnimation syncAnimation = netComponent.GetComponent<SyncAnimation>();
-
-                    syncAnimation.AddSnapshot(timestamp, syncAnimationData);
-                    break;
-            }
+            RemoveObject(assetPath, gameObject);
         }
     }
 

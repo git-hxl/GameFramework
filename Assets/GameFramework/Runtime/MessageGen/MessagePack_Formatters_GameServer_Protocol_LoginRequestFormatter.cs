@@ -22,6 +22,10 @@ namespace MessagePack.Formatters.GameServer.Protocol
         private static global::System.ReadOnlySpan<byte> GetSpan_Account() => new byte[1 + 7] { 167, 65, 99, 99, 111, 117, 110, 116 };
         // Password
         private static global::System.ReadOnlySpan<byte> GetSpan_Password() => new byte[1 + 8] { 168, 80, 97, 115, 115, 119, 111, 114, 100 };
+        // UserID
+        private static global::System.ReadOnlySpan<byte> GetSpan_UserID() => new byte[1 + 6] { 166, 85, 115, 101, 114, 73, 68 };
+        // Timestamp
+        private static global::System.ReadOnlySpan<byte> GetSpan_Timestamp() => new byte[1 + 9] { 169, 84, 105, 109, 101, 115, 116, 97, 109, 112 };
 
         public void Serialize(ref global::MessagePack.MessagePackWriter writer, global::GameServer.Protocol.LoginRequest value, global::MessagePack.MessagePackSerializerOptions options)
         {
@@ -32,11 +36,15 @@ namespace MessagePack.Formatters.GameServer.Protocol
             }
 
             var formatterResolver = options.Resolver;
-            writer.WriteMapHeader(2);
+            writer.WriteMapHeader(4);
             writer.WriteRaw(GetSpan_Account());
             global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<string>(formatterResolver).Serialize(ref writer, value.Account, options);
             writer.WriteRaw(GetSpan_Password());
             global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<string>(formatterResolver).Serialize(ref writer, value.Password, options);
+            writer.WriteRaw(GetSpan_UserID());
+            writer.Write(value.UserID);
+            writer.WriteRaw(GetSpan_Timestamp());
+            writer.Write(value.Timestamp);
         }
 
         public global::GameServer.Protocol.LoginRequest Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
@@ -69,6 +77,16 @@ namespace MessagePack.Formatters.GameServer.Protocol
                         if (global::MessagePack.Internal.AutomataKeyGen.GetKey(ref stringKey) != 7237970109966541136UL) { goto FAIL; }
 
                         ____result.Password = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<string>(formatterResolver).Deserialize(ref reader, options);
+                        continue;
+                    case 6:
+                        if (global::MessagePack.Internal.AutomataKeyGen.GetKey(ref stringKey) != 75082242552661UL) { goto FAIL; }
+
+                        ____result.UserID = reader.ReadInt32();
+                        continue;
+                    case 9:
+                        if (!global::System.MemoryExtensions.SequenceEqual(stringKey, GetSpan_Timestamp().Slice(1))) { goto FAIL; }
+
+                        ____result.Timestamp = reader.ReadInt64();
                         continue;
 
                 }
