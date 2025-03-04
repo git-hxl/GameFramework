@@ -29,7 +29,7 @@ namespace GameFramework
         {
             if (arg1.UserID == NetManager.Instance.UserID)
             {
-                //return;
+                return;
             }
 
             SpawnObject(arg2.AssetPath, arg1.UserID, arg2.ObjectID, false);

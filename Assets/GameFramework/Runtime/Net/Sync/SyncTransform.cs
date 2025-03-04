@@ -11,10 +11,9 @@ namespace GameFramework
     {
         public bool SyncRotation = true;
         public bool SyncScale = true;
-        [Range(1, 60)]
-        public int SyncFrames = 15;
+
+        public float SendInterval = 0.1f;
         public bool IsFixedUpdate = false;
-        public int CacheCount = 0;
 
         private Queue<TransformData> queueData = new Queue<TransformData>();
         private TransformData lastsyncData;
@@ -24,23 +23,14 @@ namespace GameFramework
         private float syncTimer;
         private NetComponent netComponent;
 
-        private bool startCache;
-
         private void Start()
         {
             netComponent = GetComponent<NetComponent>();
-
-            startCache = true;
         }
 
         public void EnqueueData(TransformData data)
         {
             queueData.Enqueue(data);
-
-            if (queueData.Count > CacheCount * 2 + 10)
-            {
-                Debug.LogWarning("queueData 缓存警告：" + queueData.Count);
-            }
         }
 
         private void FixedUpdate()
@@ -81,6 +71,13 @@ namespace GameFramework
 
         private void SendTransformData(float deltaTime)
         {
+            if ((Time.time - lastSendTime) < SendInterval)
+            {
+                return;
+            }
+
+            lastSendTime = Time.time;
+
             if (lastSendData != null)
             {
                 if (Mathf.Abs(transform.position.sqrMagnitude - lastSendData.Position.sqrMagnitude) < 0.0001f)
@@ -95,16 +92,66 @@ namespace GameFramework
                 }
             }
 
-            if ((Time.time - lastSendTime) < (1f / SyncFrames))
-            {
-                return;
-            }
-
-            lastSendTime = Time.time;
-
             SyncRequest syncRequest = new SyncRequest();
             syncRequest.SyncCode = SyncCode.SyncTransform;
 
+            var transformData = GetTransformData();
+
+            syncRequest.SyncData = MessagePackSerializer.Serialize(transformData);
+
+            NetManager.Instance.SendRequest(OperationCode.SyncEvent, syncRequest, LiteNetLib.DeliveryMethod.Sequenced);
+
+            lastSendData = transformData;
+        }
+
+        private void SyncTransformData(float deltaTime)
+        {
+            if (queueData.Count <= 0)
+            {
+                syncTimer = 0;
+                return;
+            }
+
+            var curSyncData = queueData.Peek();
+
+
+            syncTimer += deltaTime;
+
+
+            if (lastsyncData == null)
+            {
+                lastsyncData = queueData.Dequeue();
+
+                return;
+            }
+
+            float syncInterval = curSyncData.Time - lastsyncData.Time;
+
+            if (syncInterval <= 0 || syncInterval > SendInterval * 2)
+                syncInterval = SendInterval;
+
+            float syncProcess = syncTimer / syncInterval;
+
+
+            Debug.Log(string.Format("SyncTransform syncTimer {0} syncInterval {1} syncProcess {2}", syncTimer, syncInterval, syncProcess));
+
+            transform.position = Vector3.LerpUnclamped(lastsyncData.Position, curSyncData.Position, syncProcess);
+
+            if (SyncRotation)
+                transform.rotation = Quaternion.Lerp(Quaternion.Euler(lastsyncData.EulerAngles), Quaternion.Euler(curSyncData.EulerAngles), syncProcess);
+            if (SyncScale)
+                transform.localScale = Vector3.Lerp(lastsyncData.Scale, curSyncData.Scale, syncProcess);
+
+            if (syncProcess >= 1f)
+            {
+                lastsyncData = queueData.Dequeue();
+
+                syncTimer -= syncInterval;
+            }
+        }
+
+        private TransformData GetTransformData()
+        {
             TransformData transformData = new TransformData();
             transformData.ObjectID = netComponent.ObjectID;
             transformData.Position = transform.position;
@@ -118,60 +165,10 @@ namespace GameFramework
             else
                 transformData.Scale = Vector3.one;
 
-            syncRequest.SyncData = MessagePackSerializer.Serialize(transformData);
+            transformData.Time = Time.time;
 
-            NetManager.Instance.SendRequest(OperationCode.SyncEvent, syncRequest, LiteNetLib.DeliveryMethod.Sequenced);
-
-            lastSendData = transformData;
+            return transformData;
         }
 
-        private void SyncTransformData(float deltaTime)
-        {
-            if (startCache && queueData.Count < CacheCount)
-            {
-                return;
-            }
-
-            if (queueData.Count <= 0)
-            {
-                lastsyncData = null;
-                syncTimer = 0;
-                return;
-            }
-
-            startCache = false;
-
-            var curSyncData = queueData.Peek();
-
-            if (lastsyncData == null)
-            {
-                lastsyncData = curSyncData;
-            }
-
-            syncTimer += deltaTime;
-
-            float syncInterval = 1f / SyncFrames;
-
-            float process = syncTimer / syncInterval;
-
-            transform.position = Vector3.LerpUnclamped(lastsyncData.Position, curSyncData.Position, process);
-
-            if (SyncRotation)
-                transform.rotation = Quaternion.Lerp(Quaternion.Euler(lastsyncData.EulerAngles), Quaternion.Euler(curSyncData.EulerAngles), process);
-            if (SyncScale)
-                transform.localScale = Vector3.Lerp(lastsyncData.Scale, curSyncData.Scale, process);
-
-            if (process >= 1f)
-            {
-                lastsyncData = queueData.Dequeue();
-
-                syncTimer -= syncInterval;
-
-                if (queueData.Count <= 0)
-                {
-                    startCache = true;
-                }
-            }
-        }
     }
 }

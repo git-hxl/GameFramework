@@ -7,6 +7,7 @@ using UnityChan;
 using UnityEngine;
 using UnityEngine.UI;
 
+
 namespace GameFramework
 {
     public class NetExample : MonoBehaviour
@@ -21,6 +22,7 @@ namespace GameFramework
         public Button BtLock;
 
         public TMP_InputField inputFieldRoomID;
+        public Slider slider;
 
 
         public string IP = "127.0.0.1";
@@ -30,11 +32,22 @@ namespace GameFramework
 
         private void Awake()
         {
+            Application.targetFrameRate = 60;
+
+            slider.value = 60;
+
             ResourceManager.Instance.LoadAssetBundle(Application.streamingAssetsPath + "/StandaloneWindows/prefab");
         }
         // Start is called before the first frame update
         void Start()
         {
+
+            slider.onValueChanged.AddListener((value) =>
+            {
+                Application.targetFrameRate = (int)value;
+            });
+            
+
             BtConnect.onClick.AddListener(() =>
             {
                 NetManager.Instance.Connect(IP, Port, Random.Range(-1000, 1000));
@@ -109,15 +122,15 @@ namespace GameFramework
                 playerController.enabled = true;
 
 
-                //for (global::System.Int32 i = 0; i < obj.Users.Count; i++)
-                //{
-                //    if (obj.Users[i].UserID != NetManager.Instance.UserID)
-                //        NetPoolManager.Instance.SpawnObject($"Assets/Example/Net/Prefabs/{PlayerPrefab}.prefab", obj.Users[i].UserID, obj.Users[i].UserID, false);
-                //}
+                for (global::System.Int32 i = 0; i < obj.Users.Count; i++)
+                {
+                    if (obj.Users[i].UserID != NetManager.Instance.UserID)
+                        NetPoolManager.Instance.SpawnObject($"Assets/Example/Net/Prefabs/{PlayerPrefab}.prefab", obj.Users[i].UserID, obj.Users[i].UserID, false);
+                }
             }
             //else
             //{
-            //    NetPoolManager.Instance.SpawnObject($"Assets/Example/Net/Prefabs/{PlayerPrefab}.prefab", obj.UserID, false, obj.UserID);
+            //    NetPoolManager.Instance.SpawnObject($"Assets/Example/Net/Prefabs/{PlayerPrefab}.prefab", obj.UserID, obj.UserID);
             //}
         }
     }

@@ -227,6 +227,8 @@ namespace GameFramework
 
             OnSyncRequestEvent?.Invoke(syncRequest);
 
+            Debug.Log(string.Format("接收Sync请求：{0}", syncRequest.SyncCode));
+
             switch (syncRequest.SyncCode)
             {
                 case SyncCode.SyncSpawnObject:

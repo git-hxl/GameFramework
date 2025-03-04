@@ -157,6 +157,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   SyncRotation: 1
   SyncScale: 1
-  SyncFrames: 10
+  SyncFrames: 15
   IsFixedUpdate: 0
   CacheCount: 5

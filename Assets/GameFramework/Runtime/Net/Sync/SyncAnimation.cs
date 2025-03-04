@@ -4,15 +4,13 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using MessagePack;
-using static UnityEditor.Experimental.GraphView.GraphView;
 
 namespace GameFramework
 {
     [RequireComponent(typeof(NetComponent), typeof(Animator))]
     public class SyncAnimation : MonoBehaviour
     {
-        [Range(1, 60)]
-        public int SyncFrames = 15;
+        public float SyncInterval = 0.1f;
         public bool IsFixedUpdate = false;
 
         private Queue<AnimationData> queueData = new Queue<AnimationData>();
@@ -87,7 +85,7 @@ namespace GameFramework
 
         private void SendAnimationData(float deltaTime)
         {
-            if ((Time.time - lastSendTime) < (1f / SyncFrames))
+            if ((Time.time - lastSendTime) < SyncInterval)
             {
                 return;
             }
@@ -115,7 +113,7 @@ namespace GameFramework
                     normalizedTime = animatorStateInfo.normalizedTime;
                 }
 
-                Debug.Log("Send播放动画：" + stateHash + " time:" + normalizedTime + " speed： " + animator.speed);
+               // Debug.Log("Send播放动画：" + stateHash + " time:" + normalizedTime + " speed： " + animator.speed);
 
                 SyncRequest syncRequest = new SyncRequest();
                 syncRequest.SyncCode = SyncCode.SyncAnimation;

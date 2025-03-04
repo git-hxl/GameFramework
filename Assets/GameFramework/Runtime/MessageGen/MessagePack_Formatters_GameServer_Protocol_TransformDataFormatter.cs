@@ -28,6 +28,8 @@ namespace MessagePack.Formatters.GameServer.Protocol
         private static global::System.ReadOnlySpan<byte> GetSpan_Scale() => new byte[1 + 5] { 165, 83, 99, 97, 108, 101 };
         // Speed
         private static global::System.ReadOnlySpan<byte> GetSpan_Speed() => new byte[1 + 5] { 165, 83, 112, 101, 101, 100 };
+        // Time
+        private static global::System.ReadOnlySpan<byte> GetSpan_Time() => new byte[1 + 4] { 164, 84, 105, 109, 101 };
 
         public void Serialize(ref global::MessagePack.MessagePackWriter writer, global::GameServer.Protocol.TransformData value, global::MessagePack.MessagePackSerializerOptions options)
         {
@@ -38,7 +40,7 @@ namespace MessagePack.Formatters.GameServer.Protocol
             }
 
             var formatterResolver = options.Resolver;
-            writer.WriteMapHeader(5);
+            writer.WriteMapHeader(6);
             writer.WriteRaw(GetSpan_ObjectID());
             writer.Write(value.ObjectID);
             writer.WriteRaw(GetSpan_Position());
@@ -49,6 +51,8 @@ namespace MessagePack.Formatters.GameServer.Protocol
             global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<UnityEngine.Vector3>(formatterResolver).Serialize(ref writer, value.Scale, options);
             writer.WriteRaw(GetSpan_Speed());
             writer.Write(value.Speed);
+            writer.WriteRaw(GetSpan_Time());
+            writer.Write(value.Time);
         }
 
         public global::GameServer.Protocol.TransformData Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
@@ -99,6 +103,11 @@ namespace MessagePack.Formatters.GameServer.Protocol
                                 ____result.Speed = reader.ReadSingle();
                                 continue;
                         }
+                    case 4:
+                        if (global::MessagePack.Internal.AutomataKeyGen.GetKey(ref stringKey) != 1701669204UL) { goto FAIL; }
+
+                        ____result.Time = reader.ReadSingle();
+                        continue;
 
                 }
             }

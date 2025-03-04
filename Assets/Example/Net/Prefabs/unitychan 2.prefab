@@ -7305,10 +7305,10 @@ MonoBehaviour:
   lookSmoother: 3
   useCurves: 1
   useCurvesHeight: 0.5
-  forwardSpeed: 7
+  forwardSpeed: 3
   backwardSpeed: 2
   rotateSpeed: 2
-  jumpPower: 3
+  jumpPower: 0
 --- !u!114 &11400000
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7370,9 +7370,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   SyncRotation: 1
   SyncScale: 1
-  SyncFrames: 10
+  SyncInterval: 0.1
   IsFixedUpdate: 0
-  CacheCount: 5
 --- !u!114 &-4014376386494415156
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7385,5 +7384,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bddaca588122a094e8fb58540e6ba5c9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  SyncFrames: 15
+  SyncInterval: 0.1
   IsFixedUpdate: 0

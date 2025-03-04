@@ -12,5 +12,6 @@ namespace GameServer.Protocol
         public UnityEngine.Vector3 EulerAngles { get; set; }
         public UnityEngine.Vector3 Scale { get; set; }
         public float Speed { get; set; }
+        public float Time {  get; set; }
     }
 }
