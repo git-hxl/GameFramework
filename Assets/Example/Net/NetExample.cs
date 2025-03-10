@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using GameServer;
 using GameServer.Protocol;
 using MessagePack;
+using Newtonsoft.Json;
 using TMPro;
 using UnityChan;
 using UnityEngine;
@@ -65,6 +66,7 @@ namespace GameFramework
                 JoinRoomRequest request = new JoinRoomRequest();
 
                 request.RoomID = roomID;
+                request.UserID = NetManager.Instance.UserID;
 
                 UserInfo userInfo = new UserInfo();
                 userInfo.UserID = NetManager.Instance.UserID;
@@ -78,6 +80,7 @@ namespace GameFramework
             BtLeaveRoom.onClick.AddListener(() =>
             {
                 LeaveRoomRequest request = new LeaveRoomRequest();
+                request.UserID = NetManager.Instance.UserID;
                 NetManager.Instance.SendRequest(OperationCode.LeaveRoom, request);
             });
 
@@ -108,12 +111,15 @@ namespace GameFramework
 
         private void Instance_OnLeaveRoomEvent(LeaveRoomResponse obj)
         {
+            Debug.Log(JsonConvert.SerializeObject(obj));
 
             NetPoolManager.Instance.RemoveObject($"Assets/Example/Net/Prefabs/{PlayerPrefab}.prefab", obj.UserID);
         }
 
         private void Instance_OnJoinRoomEvent(JoinRoomResponse obj)
         {
+            Debug.Log(JsonConvert.SerializeObject(obj));
+
             if (obj.UserID == NetManager.Instance.UserID)
             {
                 NetComponent netComponent = NetPoolManager.Instance.SpawnObject($"Assets/Example/Net/Prefabs/{PlayerPrefab}.prefab", obj.UserID, obj.UserID, true);
