@@ -38,7 +38,7 @@ namespace GameFramework
 
                 _config.Add(fileName, json);
 
-                Debug.Log("º”‘ÿ≈‰÷√Œƒº˛£∫" + fileName);
+                Debug.Log("Âä†ËΩΩÈÖçÁΩÆÊñá‰ª∂Ôºö" + fileName);
             }
         }
 
@@ -52,23 +52,13 @@ namespace GameFramework
             {
                 if (_configValues.ContainsKey(fileName))
                 {
-                    foreach (var item in _configValues[fileName])
-                    {
-                        values.Add((T)item);
-                    }
+                    values = _configValues[fileName].Cast<T>().ToList();
                 }
                 else
                 {
                     values = JsonConvert.DeserializeObject<List<T>>(_config[fileName]);
 
-                    List<IConfig> configValues = new List<IConfig>();
-
-                    foreach (var item in values)
-                    {
-                        configValues.Add(item);
-                    }
-
-                    _configValues.Add(fileName, configValues);
+                    _configValues.Add(fileName, values.Cast<IConfig>().ToList());
                 }
             }
 

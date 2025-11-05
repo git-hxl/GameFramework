@@ -4,82 +4,37 @@ using UnityEngine;
 
 namespace GameFramework
 {
-    public class ObjectPoolManager : Singleton<ObjectPoolManager>
+    public class ObjectPoolManager : MonoSingleton<ObjectPoolManager>
     {
-        private Dictionary<string, ObjectPoolCollection> referenceCollections = new Dictionary<string, ObjectPoolCollection>();
-        public int Count { get { return referenceCollections.Count; } }
-
-        protected override void OnDispose()
-        {
-            ClearAll();
-        }
+        private Dictionary<string, ObjectPool> pools = new Dictionary<string, ObjectPool>();
 
         protected override void OnInit()
         {
-            //throw new NotImplementedException();
+
         }
 
-        public void ClearAll()
+
+        protected override void OnDispose()
         {
-            foreach (var item in referenceCollections.Values)
+            pools.Clear();
+        }
+
+        public void RegisterPool(string assetPath, string poolName, int maxCount = 100)
+        {
+            if (pools.ContainsKey(poolName))
             {
-                item.RemoveAll();
+                return;
             }
 
-            referenceCollections.Clear();
+            pools.Add(poolName, new ObjectPool(assetPath, poolName, maxCount));
         }
 
-        public GameObject Acquire(string assetPath)
+        public ObjectPool GetPool(string poolName)
         {
-            return GetReferenceCollection(assetPath).Acquire();
-        }
-
-        public void Release(string assetPath, GameObject reference)
-        {
-            GetReferenceCollection(assetPath).Release(reference);
-        }
-
-        public void Add(string assetPath, int count)
-        {
-            GetReferenceCollection(assetPath).Add(count);
-        }
-
-        public void Remove(string assetPath, int count)
-        {
-            GetReferenceCollection(assetPath).Remove(count);
-        }
-
-        public void RemoveAll(string assetPath)
-        {
-            GetReferenceCollection(assetPath).RemoveAll();
-        }
-
-        private ObjectPoolCollection GetReferenceCollection(string assetPath)
-        {
-            ObjectPoolCollection referenceCollection = null;
-            referenceCollections.TryGetValue(assetPath, out referenceCollection);
-
-            if (referenceCollection == null)
-            {
-                return CreateReferenceCollection(assetPath);
-            }
-
-            return referenceCollection;
-        }
-
-        public ObjectPoolCollection CreateReferenceCollection(string assetPath)
-        {
-            if (referenceCollections.ContainsKey(assetPath))
-            {
-                Debug.LogError("对象池已存在：" + assetPath);
-
+            if (pools.ContainsKey(poolName))
+                return pools[poolName];
+            else
                 return null;
-            }
-
-            ObjectPoolCollection referenceCollection = new ObjectPoolCollection(assetPath);
-            referenceCollections.Add(assetPath, referenceCollection);
-
-            return referenceCollection;
         }
 
     }

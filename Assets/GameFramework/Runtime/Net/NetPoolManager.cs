@@ -58,7 +58,9 @@ namespace GameFramework
                 //return null;
             }
 
-            GameObject gameObject = ObjectPoolManager.Instance.Acquire(assetPath);
+            ObjectPool objectPool = ObjectPoolManager.Instance.GetPool(assetPath);
+
+            GameObject gameObject = objectPool.Spawn();
             NetComponent netComponent = gameObject.GetComponent<NetComponent>();
             if (netComponent == null)
             {
@@ -127,7 +129,7 @@ namespace GameFramework
                 spawnObjects.Remove(netComponent.ObjectID);
             }
 
-            ObjectPoolManager.Instance.Release(assetPath, gameObject);
+            ObjectPoolManager.Instance.GetPool(assetPath).Despawn(gameObject);
         }
 
         public void RemoveObject(string assetPath, int objectID)
