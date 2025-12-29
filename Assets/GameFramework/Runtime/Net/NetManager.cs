@@ -97,7 +97,7 @@ namespace GameFramework
         }
 #endif
 
-        public void SendRequest(OperationCode code, BaseRequest? baseRequest, DeliveryMethod deliveryMethod = DeliveryMethod.ReliableOrdered)
+        public void SendRequest(OperationCode code, BaseRequest baseRequest, DeliveryMethod deliveryMethod = DeliveryMethod.ReliableOrdered)
         {
             if (server == null)
                 return;

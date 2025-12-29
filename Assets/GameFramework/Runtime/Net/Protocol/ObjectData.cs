@@ -8,7 +8,7 @@ namespace GameServer.Protocol
     public class ObjectData
     {
         public int ObjectID { get; set; }
-        public string AssetPath { get; set; }
+        public string Prefab { get; set; }
       
     }
 }

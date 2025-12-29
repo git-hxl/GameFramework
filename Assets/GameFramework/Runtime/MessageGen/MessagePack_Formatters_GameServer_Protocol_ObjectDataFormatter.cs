@@ -36,7 +36,7 @@ namespace MessagePack.Formatters.GameServer.Protocol
             writer.WriteRaw(GetSpan_ObjectID());
             writer.Write(value.ObjectID);
             writer.WriteRaw(GetSpan_AssetPath());
-            global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<string>(formatterResolver).Serialize(ref writer, value.AssetPath, options);
+            global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<string>(formatterResolver).Serialize(ref writer, value.Prefab, options);
         }
 
         public global::GameServer.Protocol.ObjectData Deserialize(ref global::MessagePack.MessagePackReader reader, global::MessagePack.MessagePackSerializerOptions options)
@@ -68,7 +68,7 @@ namespace MessagePack.Formatters.GameServer.Protocol
                     case 9:
                         if (!global::System.MemoryExtensions.SequenceEqual(stringKey, GetSpan_AssetPath().Slice(1))) { goto FAIL; }
 
-                        ____result.AssetPath = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<string>(formatterResolver).Deserialize(ref reader, options);
+                        ____result.Prefab = global::MessagePack.FormatterResolverExtensions.GetFormatterWithVerify<string>(formatterResolver).Deserialize(ref reader, options);
                         continue;
 
                 }

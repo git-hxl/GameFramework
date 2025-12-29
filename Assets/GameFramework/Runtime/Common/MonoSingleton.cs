@@ -1,11 +1,10 @@
-﻿
+
 using UnityEngine;
 
 namespace GameFramework
 {
     public abstract class MonoSingleton<T> : MonoBehaviour where T : MonoSingleton<T>
     {
-        private bool isInited = false;
         private static T instance = null;
         public static T Instance
         {
@@ -21,10 +20,11 @@ namespace GameFramework
 
         protected virtual void Awake()
         {
-            if (isInited)
+            if (instance != null)
+            {
+                DestroyImmediate(gameObject);
                 return;
-
-            isInited = true;
+            }
 
             instance = this as T;
             DontDestroyOnLoad(gameObject);
@@ -34,7 +34,6 @@ namespace GameFramework
 
         public void Dispose()
         {
-            isInited = false;
             instance = null;
             OnDispose();
             Destroy(gameObject);

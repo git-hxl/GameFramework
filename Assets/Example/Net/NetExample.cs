@@ -38,6 +38,10 @@ namespace GameFramework
             slider.value = 60;
 
             ResourceManager.Instance.LoadAssetBundle(Application.streamingAssetsPath + "/StandaloneWindows/prefab");
+
+            ObjectPoolManager.Instance.RegisterPool("Assets/Example/Net/Prefabs/unitychan 1.prefab", "unitychan 1");
+            ObjectPoolManager.Instance.RegisterPool("Assets/Example/Net/Prefabs/unitychan 2.prefab", "unitychan 2");
+            ObjectPoolManager.Instance.RegisterPool("Assets/Example/Net/Prefabs/unitychan 3.prefab", "unitychan 3");
         }
         // Start is called before the first frame update
         void Start()
@@ -101,6 +105,7 @@ namespace GameFramework
 
             NetManager.Instance.OnLeaveRoomEvent += Instance_OnLeaveRoomEvent;
 
+            NetManager.Instance.OnDisconnectEvent += Instance_OnDisconnectEvent;
         }
 
         private void Instance_OnConnectEvent()
@@ -109,11 +114,16 @@ namespace GameFramework
             NetManager.Instance.SendRequest(OperationCode.Login, request);
         }
 
+        private void Instance_OnDisconnectEvent()
+        {
+            NetPoolManager.Instance.RemoveObject(PlayerPrefab, NetManager.Instance.UserID);
+        }
+
         private void Instance_OnLeaveRoomEvent(LeaveRoomResponse obj)
         {
             Debug.Log(JsonConvert.SerializeObject(obj));
 
-            NetPoolManager.Instance.RemoveObject($"Assets/Example/Net/Prefabs/{PlayerPrefab}.prefab", obj.UserID);
+            NetPoolManager.Instance.RemoveObject(PlayerPrefab, obj.UserID);
         }
 
         private void Instance_OnJoinRoomEvent(JoinRoomResponse obj)
@@ -122,7 +132,7 @@ namespace GameFramework
 
             if (obj.UserID == NetManager.Instance.UserID)
             {
-                NetComponent netComponent = NetPoolManager.Instance.SpawnObject($"Assets/Example/Net/Prefabs/{PlayerPrefab}.prefab", obj.UserID, obj.UserID, true);
+                NetComponent netComponent = NetPoolManager.Instance.SpawnObject(PlayerPrefab, obj.UserID, obj.UserID, true);
                 UnityChanControlScriptWithRgidBody playerController = netComponent.GetComponent<UnityChanControlScriptWithRgidBody>();
 
                 playerController.enabled = true;
@@ -131,7 +141,7 @@ namespace GameFramework
                 for (global::System.Int32 i = 0; i < obj.Users.Count; i++)
                 {
                     if (obj.Users[i].UserID != NetManager.Instance.UserID)
-                        NetPoolManager.Instance.SpawnObject($"Assets/Example/Net/Prefabs/{PlayerPrefab}.prefab", obj.Users[i].UserID, obj.Users[i].UserID, false);
+                        NetPoolManager.Instance.SpawnObject(PlayerPrefab, obj.Users[i].UserID, obj.Users[i].UserID, false);
                 }
             }
             //else

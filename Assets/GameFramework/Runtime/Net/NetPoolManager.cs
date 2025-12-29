@@ -22,7 +22,7 @@ namespace GameFramework
 
         private void Instance_OnSyncRemoveObjectEvent(SyncRequest arg1, ObjectData arg2)
         {
-            RemoveObject(arg2.AssetPath, arg2.ObjectID);
+            RemoveObject(arg2.Prefab, arg2.ObjectID);
         }
 
         private void Instance_OnSyncSpawnObjectEvent(SyncRequest arg1, ObjectData arg2)
@@ -32,7 +32,7 @@ namespace GameFramework
                 return;
             }
 
-            SpawnObject(arg2.AssetPath, arg1.UserID, arg2.ObjectID, false);
+            SpawnObject(arg2.Prefab, arg1.UserID, arg2.ObjectID, false);
         }
 
         protected override void OnDispose()
@@ -45,12 +45,12 @@ namespace GameFramework
         /// <summary>
         /// 生成网络对象
         /// </summary>
-        /// <param name="assetPath"></param>
+        /// <param name="prefab"></param>
         /// <param name="playerID"></param>
         /// <param name="objectID"></param>
         /// <param name="isLocal"></param>
         /// <returns></returns>
-        public NetComponent SpawnObject(string assetPath, int playerID, int objectID = -1, bool isLocal = false)
+        public NetComponent SpawnObject(string prefab, int playerID, int objectID = -1, bool isLocal = false)
         {
             if (spawnObjects.ContainsKey(objectID))
             {
@@ -58,7 +58,7 @@ namespace GameFramework
                 //return null;
             }
 
-            ObjectPool objectPool = ObjectPoolManager.Instance.GetPool(assetPath);
+            ObjectPool objectPool = ObjectPoolManager.Instance.GetPool(prefab);
 
             GameObject gameObject = objectPool.Spawn();
             NetComponent netComponent = gameObject.GetComponent<NetComponent>();
@@ -73,7 +73,7 @@ namespace GameFramework
                 ObjectData objectData = new ObjectData();
 
                 objectData.ObjectID = objectID;
-                objectData.AssetPath = assetPath;
+                objectData.Prefab = prefab;
 
                 SyncRequest syncRequest = new SyncRequest();
 
@@ -113,7 +113,7 @@ namespace GameFramework
                 ObjectData objectData = new ObjectData();
 
                 objectData.ObjectID = netComponent.ObjectID;
-                objectData.AssetPath = assetPath;
+                objectData.Prefab = assetPath;
 
                 SyncRequest syncRequest = new SyncRequest();
 
