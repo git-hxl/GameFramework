@@ -1,0 +1,245 @@
+[
+  {
+    "ID": 1,
+    "Des": "标准环道",
+    "Name": 10001,
+    "Length": 400.0,
+    "Range": 5.0,
+    "Scale": 0.0,
+    "ScaledLength": 0.0
+  },
+  {
+    "ID": 2,
+    "Des": "中心盆地",
+    "Name": 10002,
+    "Length": 2500.0,
+    "Range": 6.0,
+    "Scale": 0.0,
+    "ScaledLength": 0.0
+  },
+  {
+    "ID": 3,
+    "Des": "内陆赛道",
+    "Name": 10003,
+    "Length": 8000.0,
+    "Range": 6.0,
+    "Scale": 0.0,
+    "ScaledLength": 0.0
+  },
+  {
+    "ID": 4,
+    "Des": "沿海赛道",
+    "Name": 10004,
+    "Length": 10000.0,
+    "Range": 6.0,
+    "Scale": 0.0,
+    "ScaledLength": 0.0
+  },
+  {
+    "ID": 5,
+    "Des": "雪地",
+    "Name": 10004,
+    "Length": 3000.0,
+    "Range": 3.0,
+    "Scale": 0.0,
+    "ScaledLength": 0.0
+  },
+  {
+    "ID": 6,
+    "Des": "雪地-山顶",
+    "Name": 10004,
+    "Length": 2000.0,
+    "Range": 2.0,
+    "Scale": 0.0,
+    "ScaledLength": 0.0
+  },
+  {
+    "ID": 7,
+    "Des": "城市",
+    "Name": 10004,
+    "Length": 2100.0,
+    "Range": 3.0,
+    "Scale": 0.0,
+    "ScaledLength": 0.0
+  },
+  {
+    "ID": 8,
+    "Des": "城市-马拉松线1",
+    "Name": 10004,
+    "Length": 2200.0,
+    "Range": 3.0,
+    "Scale": 0.0,
+    "ScaledLength": 0.0
+  },
+  {
+    "ID": 9,
+    "Des": "沙滩",
+    "Name": 10004,
+    "Length": 3300.0,
+    "Range": 3.0,
+    "Scale": 0.0,
+    "ScaledLength": 0.0
+  },
+  {
+    "ID": 10,
+    "Des": "沙滩-海上",
+    "Name": 10004,
+    "Length": 4400.0,
+    "Range": 3.0,
+    "Scale": 0.0,
+    "ScaledLength": 0.0
+  },
+  {
+    "ID": 11,
+    "Des": "城市-马拉松线2",
+    "Name": 10004,
+    "Length": 4000.0,
+    "Range": 3.0,
+    "Scale": 0.0,
+    "ScaledLength": 0.0
+  },
+  {
+    "ID": 12,
+    "Des": "峡谷",
+    "Name": 10004,
+    "Length": 6800.0,
+    "Range": 3.0,
+    "Scale": 0.0,
+    "ScaledLength": 0.0
+  },
+  {
+    "ID": 13,
+    "Des": "小镇",
+    "Name": 10004,
+    "Length": 1800.0,
+    "Range": 3.0,
+    "Scale": 0.0,
+    "ScaledLength": 0.0
+  },
+  {
+    "ID": 14,
+    "Des": "雪地-圣诞",
+    "Name": 10004,
+    "Length": 3800.0,
+    "Range": 3.0,
+    "Scale": 0.0,
+    "ScaledLength": 0.0
+  },
+  {
+    "ID": 15,
+    "Des": "沙漠",
+    "Name": 10004,
+    "Length": 6500.0,
+    "Range": 3.0,
+    "Scale": 0.0,
+    "ScaledLength": 0.0
+  },
+  {
+    "ID": 16,
+    "Des": "森林",
+    "Name": 10004,
+    "Length": 2800.0,
+    "Range": 3.0,
+    "Scale": 0.0,
+    "ScaledLength": 0.0
+  },
+  {
+    "ID": 17,
+    "Des": "峡谷-山顶",
+    "Name": 10004,
+    "Length": 6900.0,
+    "Range": 3.0,
+    "Scale": 0.0,
+    "ScaledLength": 0.0
+  },
+  {
+    "ID": 18,
+    "Des": "峡谷-山顶2",
+    "Name": 10004,
+    "Length": 3300.0,
+    "Range": 3.0,
+    "Scale": 0.0,
+    "ScaledLength": 0.0
+  },
+  {
+    "ID": 19,
+    "Des": "环大陆1",
+    "Name": 10004,
+    "Length": 6000.0,
+    "Range": 3.0,
+    "Scale": 0.0,
+    "ScaledLength": 0.0
+  },
+  {
+    "ID": 20,
+    "Des": "环大陆2",
+    "Name": 10004,
+    "Length": 8800.0,
+    "Range": 3.0,
+    "Scale": 0.0,
+    "ScaledLength": 0.0
+  },
+  {
+    "ID": 21,
+    "Des": "大世界赛道",
+    "Name": 10004,
+    "Length": 21800.0,
+    "Range": 3.0,
+    "Scale": 0.0,
+    "ScaledLength": 0.0
+  },
+  {
+    "ID": 22,
+    "Des": "星空赛道",
+    "Name": 10004,
+    "Length": 7600.0,
+    "Range": 3.0,
+    "Scale": 0.0,
+    "ScaledLength": 0.0
+  },
+  {
+    "ID": 23,
+    "Des": "森林-山顶1",
+    "Name": 10004,
+    "Length": 5700.0,
+    "Range": 3.0,
+    "Scale": 0.0,
+    "ScaledLength": 0.0
+  },
+  {
+    "ID": 24,
+    "Des": "终极体育馆",
+    "Name": 10004,
+    "Length": 400.0,
+    "Range": 5.0,
+    "Scale": 0.0,
+    "ScaledLength": 0.0
+  },
+  {
+    "ID": 1000,
+    "Des": "MR循环道路",
+    "Name": 10004,
+    "Length": 10000.0,
+    "Range": 4.0,
+    "Scale": 0.0,
+    "ScaledLength": 0.0
+  },
+  {
+    "ID": 1001,
+    "Des": "MR体育馆",
+    "Name": 10004,
+    "Length": 400.0,
+    "Range": 5.0,
+    "Scale": 0.0,
+    "ScaledLength": 0.0
+  },
+  {
+    "ID": 1002,
+    "Des": "MR雪地",
+    "Name": 10004,
+    "Length": 3000.0,
+    "Range": 3.0,
+    "Scale": 0.0,
+    "ScaledLength": 0.0
+  }
+]
