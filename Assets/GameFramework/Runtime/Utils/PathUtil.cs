@@ -6,7 +6,7 @@ namespace GameFramework
     public class PathUtil
     {
         /// <summary>
-        /// »ñÈ¡½ÚµãÂ·¾¶£¨root/gameobject£©
+        /// è·å–èŠ‚ç‚¹è·¯å¾„ï¼ˆroot/gameobjectï¼‰
         /// </summary>
         /// <param name="transform"></param>
         /// <param name="pattern"></param>

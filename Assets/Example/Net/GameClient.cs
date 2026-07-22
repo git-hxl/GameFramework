@@ -8,6 +8,13 @@ using SharedLib.Protocol;
 public class GameClient
 {
     public event Action<string> OnLog;
+    public event Action OnJoinedGame;
+    public event Action OnLeftGame;
+    public event Action<PlayerInfo> OnPlayerJoinedGame;
+    public event Action<PlayerInfo> OnPlayerLeftGame;
+    public event Action<ObjectSpawnData> OnObjectSpawnReceived;
+    public event Action<ObjectDespawnData> OnObjectDespawnReceived;
+    public event Action<EntitySyncData> OnEntitySyncReceived;
 
     public bool IsConnected => _peer != null;
 
@@ -46,6 +53,7 @@ public class GameClient
         {
             _peer = null;
             Log($"[Game] Disconnected: {info.Reason}");
+            OnLeftGame?.Invoke();
         };
     }
 
@@ -133,13 +141,17 @@ public class GameClient
                     {
                         var resp = MessagePackSerializer.Deserialize<JoinGameResponse>(payload);
                         Log($"[Game] JoinGameResponse OK, room={resp.RoomId}, owner={resp.OwnerUserId}");
+                        OnJoinedGame?.Invoke();
                     }
                     else Log($"[Game] JoinGameResponse error: {rc}");
                     break;
 
                 case MessageIds.LeaveGame:
                     if (rc == ReturnCode.Success)
+                    {
                         Log($"[Game] LeaveGame OK");
+                        OnLeftGame?.Invoke();
+                    }
                     else
                         Log($"[Game] LeaveGame error: {rc}");
                     break;
@@ -147,21 +159,31 @@ public class GameClient
                 case MessageIds.JoinGameNotify:
                     var joinNotify = MessagePackSerializer.Deserialize<JoinGameNotify>(payload);
                     Log($"[Game] JoinGameNotify: {joinNotify.Player.Nickname} -> room {joinNotify.RoomId}");
+                    OnPlayerJoinedGame?.Invoke(joinNotify.Player);
+                    break;
+
+                case MessageIds.LeaveGameNotify:
+                    var leaveNotify = MessagePackSerializer.Deserialize<LeaveGameNotify>(payload);
+                    Log($"[Game] LeaveGameNotify: userId={leaveNotify.UserId} left");
+                    OnPlayerLeftGame?.Invoke(new PlayerInfo { UserId = leaveNotify.UserId });
                     break;
 
                 case MessageIds.EntitySync:
                     var sync = MessagePackSerializer.Deserialize<EntitySyncData>(payload);
                     Log($"[Game] EntitySync: id={sync.EntityId}, pos=({sync.PosX:F1},{sync.PosY:F1},{sync.PosZ:F1}), anim={sync.AnimName}");
+                    OnEntitySyncReceived?.Invoke(sync);
                     break;
 
                 case MessageIds.ObjectSpawn:
                     var spawn = MessagePackSerializer.Deserialize<ObjectSpawnData>(payload);
                     Log($"[Game] ObjectSpawn: id={spawn.ObjectId}, prefab={spawn.PrefabName}, pos=({spawn.PosX:F1},{spawn.PosY:F1},{spawn.PosZ:F1})");
+                    OnObjectSpawnReceived?.Invoke(spawn);
                     break;
 
                 case MessageIds.ObjectDespawn:
                     var despawn = MessagePackSerializer.Deserialize<ObjectDespawnData>(payload);
                     Log($"[Game] ObjectDespawn: id={despawn.ObjectId}");
+                    OnObjectDespawnReceived?.Invoke(despawn);
                     break;
 
                 case MessageIds.GameStartNotify:

@@ -4,7 +4,7 @@ namespace GameFramework
 {
     public class MultilanguageData
     {
-        public string ID;//中文文本的HashCode
+        public string ID;//涓枃鏂囨湰鐨凥ashCode
         public string Chinese = "";
         public string English = "";
 

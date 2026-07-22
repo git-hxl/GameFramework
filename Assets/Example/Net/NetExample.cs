@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using GameFramework;
 using SharedLib.Models;
 using UnityEngine;
 
@@ -11,6 +12,8 @@ public class NetExample : MonoBehaviour
     GameClient _gameClient;
 
     PlayerInfo _player;
+    GameObject _localCharacter;
+    Dictionary<long, GameObject> _spawnedObjects = new();
     List<string> _logLines = new();
     string _inputText = "";
     Vector2 _scrollPos;
@@ -18,9 +21,11 @@ public class NetExample : MonoBehaviour
 
     string _gsAddress = "127.0.0.1";
     int _gsPort = 9051;
-
+    
     void Awake()
     {
+        ResourceManager.Instance.LoadAssetBundle(Application.streamingAssetsPath+"/StandaloneOSX/"+"prefab");
+
         var userId = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
         _player = new PlayerInfo
         {
@@ -42,6 +47,13 @@ public class NetExample : MonoBehaviour
 
         _gameClient = new GameClient();
         _gameClient.OnLog += AddLog;
+        _gameClient.OnJoinedGame += SpawnLocalPlayer;
+        _gameClient.OnLeftGame += ClearAllGameObjects;
+        _gameClient.OnPlayerJoinedGame += SpawnPlayerCharacter;
+        _gameClient.OnPlayerLeftGame += DespawnPlayerCharacter;
+        _gameClient.OnObjectSpawnReceived += OnObjectSpawn;
+        _gameClient.OnObjectDespawnReceived += OnObjectDespawn;
+        _gameClient.OnEntitySyncReceived += OnEntitySync;
     }
 
     void Start()
@@ -67,6 +79,117 @@ public class NetExample : MonoBehaviour
         _logLines.Add(msg);
         if (_logLines.Count > 500)
             _logLines.RemoveAt(0);
+    }
+
+    void SpawnLocalPlayer()
+    {
+        const string prefabPath = "Assets/UnityTechnologies/SpaceRobotKyle/Prefabs/RobotKyle.prefab";
+        var prefab = ResourceManager.Instance.LoadAsset<GameObject>(prefabPath);
+        if (prefab == null)
+        {
+            AddLog($"[Game] Failed to load player prefab: {prefabPath}");
+            return;
+        }
+        _localCharacter = Instantiate(prefab);
+        _localCharacter.name = $"Player_{_player.UserId}";
+        _spawnedObjects[_player.UserId] = _localCharacter;
+        AddLog($"[Game] Spawned local player: {_localCharacter.name}");
+    }
+
+    static readonly Dictionary<string, string> PrefabPaths = new()
+    {
+        { "RobotKyle", "Assets/UnityTechnologies/SpaceRobotKyle/Prefabs/RobotKyle.prefab" }
+    };
+
+    void OnObjectSpawn(ObjectSpawnData data)
+    {
+        if (_spawnedObjects.TryGetValue(data.ObjectId, out var existGo))
+        {
+            existGo.transform.SetPositionAndRotation(
+                new Vector3(data.PosX, data.PosY, data.PosZ),
+                Quaternion.Euler(data.RotX, data.RotY, data.RotZ));
+            return;
+        }
+
+        if (!PrefabPaths.TryGetValue(data.PrefabName, out var path))
+        {
+            AddLog($"[Game] Unknown prefab: {data.PrefabName}");
+            return;
+        }
+
+        var prefab = ResourceManager.Instance.LoadAsset<GameObject>(path);
+        if (prefab == null)
+        {
+            AddLog($"[Game] Failed to load prefab: {path}");
+            return;
+        }
+
+        var go = Instantiate(prefab);
+        go.name = $"{data.PrefabName}_{data.ObjectId}";
+        go.transform.SetPositionAndRotation(
+            new Vector3(data.PosX, data.PosY, data.PosZ),
+            Quaternion.Euler(data.RotX, data.RotY, data.RotZ));
+        _spawnedObjects[data.ObjectId] = go;
+    }
+
+    void OnObjectDespawn(ObjectDespawnData data)
+    {
+        if (_spawnedObjects.TryGetValue(data.ObjectId, out var go))
+        {
+            Destroy(go);
+            _spawnedObjects.Remove(data.ObjectId);
+        }
+    }
+
+    void OnEntitySync(EntitySyncData data)
+    {
+        if (_spawnedObjects.TryGetValue(data.EntityId, out var go))
+        {
+            go.transform.SetPositionAndRotation(
+                new Vector3(data.PosX, data.PosY, data.PosZ),
+                Quaternion.Euler(data.RotX, data.RotY, data.RotZ));
+        }
+    }
+
+    void SpawnPlayerCharacter(PlayerInfo playerInfo)
+    {
+        if (_spawnedObjects.ContainsKey(playerInfo.UserId))
+            return;
+
+        var path = PrefabPaths["RobotKyle"];
+        var prefab = ResourceManager.Instance.LoadAsset<GameObject>(path);
+        if (prefab == null)
+        {
+            AddLog($"[Game] Failed to load prefab for player {playerInfo.Nickname}");
+            return;
+        }
+
+        var go = Instantiate(prefab);
+        go.name = $"Player_{playerInfo.UserId}";
+        _spawnedObjects[playerInfo.UserId] = go;
+        AddLog($"[Game] Spawned player: {playerInfo.Nickname} (id={playerInfo.UserId})");
+    }
+
+    void DespawnPlayerCharacter(PlayerInfo playerInfo)
+    {
+        if (_spawnedObjects.TryGetValue(playerInfo.UserId, out var go))
+        {
+            Destroy(go);
+            _spawnedObjects.Remove(playerInfo.UserId);
+            AddLog($"[Game] Despawned player: {playerInfo.Nickname} (id={playerInfo.UserId})");
+        }
+    }
+
+    void ClearAllGameObjects()
+    {
+        foreach (var kv in _spawnedObjects)
+        {
+            if (kv.Value != null)
+                Destroy(kv.Value);
+        }
+        _spawnedObjects.Clear();
+        _localCharacter = null;
+        AddLog("[Game] Cleared all game objects");
     }
 
     void OnGUI()

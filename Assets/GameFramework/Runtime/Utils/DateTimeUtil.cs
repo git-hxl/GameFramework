@@ -7,7 +7,7 @@ namespace GameFramework
     public class DateTimeUtil
     {
         /// <summary>
-        /// Ê±¼ä´Á£¨ºÁÃë£©
+        /// æ—¶é—´æˆ³ï¼ˆæ¯«ç§’ï¼‰
         /// </summary>
         /// <returns></returns>
         public static long TimeStamp
@@ -20,9 +20,9 @@ namespace GameFramework
         }
 
         /// <summary>
-        /// ×ª»¯Ê±¼ä´Á
+        /// è½¬åŒ–æ—¶é—´æˆ³
         /// </summary>
-        /// <param name="timeStamp">Ê±¼ä´Á£¨ºÁÃë£©</param>
+        /// <param name="timeStamp">æ—¶é—´æˆ³ï¼ˆæ¯«ç§’ï¼‰</param>
         /// <returns>UTC DateTime</returns>
         public static System.DateTime ConvertToDateTime(long timeStamp)
         {

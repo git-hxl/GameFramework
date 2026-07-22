@@ -18,9 +18,9 @@ namespace GameFramework
             return ip;
         }
         /// <summary>
-        /// Ö»±£Áô×ÖÄ¸Êı×Ö
+        /// åªä¿ç•™å­—æ¯æ•°å­—
         /// </summary>
-        /// <param name="s">ÊÇ·ñÒÆ³ı¿Õ¸ñ</param>
+        /// <param name="s">æ˜¯å¦ç§»é™¤ç©ºæ ¼</param>
         /// <returns></returns>
         public static string ToAlphaNumber(string str, bool isTrim = true)
         {
@@ -31,9 +31,9 @@ namespace GameFramework
             return str;
         }
         /// <summary>
-        /// Ö»±£Áô×ÖÄ¸Êı×Öºº×Ö
+        /// åªä¿ç•™å­—æ¯æ•°å­—æ±‰å­—
         /// </summary>
-        /// <param name="s">ÊÇ·ñÒÆ³ı¿Õ¸ñ</param>
+        /// <param name="s">æ˜¯å¦ç§»é™¤ç©ºæ ¼</param>
         /// <returns></returns>
         public static string ToAlphaNumberAndChinese(string str, bool isTrim = true)
         {
@@ -45,7 +45,7 @@ namespace GameFramework
         }
 
         /// <summary>
-        /// Unicode×ªÖĞÎÄ
+        /// Unicodeè½¬ä¸­æ–‡
         /// </summary>
         /// <returns></returns>
         public static string UnicodeToChinese(string str)

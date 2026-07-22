@@ -29,7 +29,7 @@ namespace GameFramework
         }
 
         /// <summary>
-        /// »ñÈ¡¶àÓïÑÔÎÄ±¾
+        /// è·å–å¤šè¯­è¨€æ–‡æœ¬
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
@@ -44,7 +44,7 @@ namespace GameFramework
                     case MultilanguagType.English: return languageData.English;
                 }
             }
-            Debug.LogError($"¶àÓïÑÔID£º{id} ²»´æÔÚ");
+            Debug.LogError($"å¤šè¯­è¨€IDï¼š{id} ä¸å­˜åœ¨");
             return "";
         }
 

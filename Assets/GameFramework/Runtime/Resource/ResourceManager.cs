@@ -62,7 +62,6 @@ namespace GameFramework
 #if UNITY_EDITOR
             asset = UnityEditor.AssetDatabase.LoadAssetAtPath<T>(path);
             await UniTask.DelayFrame(1);
-
             return asset;
 #endif
 

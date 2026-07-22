@@ -40,28 +40,28 @@ namespace GameFramework.Editor
         }
 
         /// <summary>
-        /// »æÖÆ´°¿Ú
+        /// ç»˜åˆ¶çª—å£
         /// </summary>
         private void DrawWindow()
         {
-            GUILayout.Label("´ò°üÆ½Ì¨");
+            GUILayout.Label("æ‰“åŒ…å¹³å°");
             m_BuildTarget = (BuildTarget)EditorGUILayout.EnumPopup(m_BuildTarget);
 
-            GUILayout.Label("´ò°ü·½Ê½");
+            GUILayout.Label("æ‰“åŒ…æ–¹å¼");
             m_BuildAssetOptions = (BuildAssetBundleOptions)EditorGUILayout.EnumPopup(m_BuildAssetOptions);
 
 
-            GUILayout.Label("App°æ±¾");
+            GUILayout.Label("Appç‰ˆæœ¬");
             appVersion = GUILayout.TextField(appVersion);
-            GUILayout.Label("×ÊÔ´°æ±¾");
+            GUILayout.Label("èµ„æºç‰ˆæœ¬");
             assetVersion = GUILayout.TextField(assetVersion);
 
-            GUILayout.Label("Êä³öÂ·¾¶");
+            GUILayout.Label("è¾“å‡ºè·¯å¾„");
             assetBundlePath = GUILayout.TextField(assetBundlePath);
 
-            if (GUILayout.Button("Ñ¡ÔñÎÄ¼ş¼Ğ"))
+            if (GUILayout.Button("é€‰æ‹©æ–‡ä»¶å¤¹"))
             {
-                string selectPath = EditorUtility.OpenFolderPanel("´ò°üÄ¿Â¼", Application.dataPath, "");
+                string selectPath = EditorUtility.OpenFolderPanel("æ‰“åŒ…ç›®å½•", Application.dataPath, "");
                 assetBundlePath = selectPath;
             }
 
@@ -80,19 +80,19 @@ namespace GameFramework.Editor
                 }
             }
 
-            if (GUILayout.Button("´ò°ü"))
+            if (GUILayout.Button("æ‰“åŒ…"))
             {
                 Build();
             }
 
-            if (GUILayout.Button("Çå³ı´ò°üÄ¿Â¼"))
+            if (GUILayout.Button("æ¸…é™¤æ‰“åŒ…ç›®å½•"))
             {
                 ClearOutPath();
             }
         }
 
         /// <summary>
-        /// ´ò°ü
+        /// æ‰“åŒ…
         /// </summary>
         private void Build()
         {
@@ -130,7 +130,7 @@ namespace GameFramework.Editor
         }
 
         /// <summary>
-        /// Çå³ıÄ¿Â¼
+        /// æ¸…é™¤ç›®å½•
         /// </summary>
         private void ClearOutPath()
         {
