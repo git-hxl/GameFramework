@@ -15,6 +15,6 @@ namespace SharedLib.Models
         [Key(2)] public int Gender { get; set; }
         [Key(3)] public string Avatar { get; set; } = string.Empty;
         [Key(4)] public int Age { get; set; }
-        [Key(5)] public Dictionary<string, string> ExtraData { get; set; } = new();
+        [Key(5)] public Dictionary<string, string> ExtraData { get; set; }
     }
 }

@@ -233,6 +233,11 @@ public class LobbyClient
                     else Log($"[Lobby] LeaveRoomResponse error: {rc}");
                     break;
 
+                case MessageIds.LeaveRoomNotify:
+                    var leaveRoomNotify = MessagePackSerializer.Deserialize<LeaveRoomNotify>(payload);
+                    Log($"[Lobby] LeaveRoomNotify: userId={leaveRoomNotify.UserId} left room {leaveRoomNotify.RoomId}");
+                    break;
+
                 case MessageIds.RoomList:
                     if (rc == ReturnCode.Success)
                     {

@@ -14,6 +14,7 @@ public class NetExample : MonoBehaviour
     PlayerInfo _player;
     GameObject _localCharacter;
     Dictionary<long, GameObject> _spawnedObjects = new();
+    Dictionary<long, EntitySyncTarget> _entityTargets = new();
     List<string> _logLines = new();
     string _inputText = "";
     Vector2 _scrollPos;
@@ -21,10 +22,14 @@ public class NetExample : MonoBehaviour
 
     string _gsAddress = "127.0.0.1";
     int _gsPort = 9051;
-    
+
+    float _syncTimer;
+    const float SyncInterval = 0.05f;
+    Animator _localAnimator;
+
     void Awake()
     {
-        ResourceManager.Instance.LoadAssetBundle(Application.streamingAssetsPath+"/StandaloneOSX/"+"prefab");
+        ResourceManager.Instance.LoadAssetBundle(Application.streamingAssetsPath + "/StandaloneOSX/" + "prefab");
 
         var userId = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
         _player = new PlayerInfo
@@ -47,7 +52,7 @@ public class NetExample : MonoBehaviour
 
         _gameClient = new GameClient();
         _gameClient.OnLog += AddLog;
-        _gameClient.OnJoinedGame += SpawnLocalPlayer;
+        _gameClient.OnJoinedGame += OnJoinedGameRoom;
         _gameClient.OnLeftGame += ClearAllGameObjects;
         _gameClient.OnPlayerJoinedGame += SpawnPlayerCharacter;
         _gameClient.OnPlayerLeftGame += DespawnPlayerCharacter;
@@ -66,6 +71,31 @@ public class NetExample : MonoBehaviour
     {
         _lobbyClient.PollEvents();
         _gameClient.PollEvents();
+
+        float dt = Time.deltaTime;
+        if (_localCharacter != null)
+        {
+            _syncTimer += dt;
+            if (_syncTimer >= SyncInterval)
+            {
+                _syncTimer = 0f;
+                SendLocalEntitySync();
+            }
+        }
+
+        float t = Mathf.Clamp01(dt / SyncInterval * 2f);
+        foreach (var kv in _entityTargets)
+        {
+            if (kv.Key == _player.UserId)
+                continue;
+            if (!_spawnedObjects.TryGetValue(kv.Key, out var go) || go == null)
+                continue;
+            var target = kv.Value;
+
+            float maxSpeed = Vector3.Distance(go.transform.position, target.Position) / SyncInterval;
+            go.transform.position = Vector3.MoveTowards(go.transform.position, target.Position, maxSpeed * dt);
+            go.transform.rotation = Quaternion.Slerp(go.transform.rotation, target.Rotation, t);
+        }
     }
 
     void OnDestroy()
@@ -81,19 +111,42 @@ public class NetExample : MonoBehaviour
             _logLines.RemoveAt(0);
     }
 
-    void SpawnLocalPlayer()
+    void OnJoinedGameRoom(JoinGameResponse resp)
     {
-        const string prefabPath = "Assets/UnityTechnologies/SpaceRobotKyle/Prefabs/RobotKyle.prefab";
-        var prefab = ResourceManager.Instance.LoadAsset<GameObject>(prefabPath);
-        if (prefab == null)
+        if (resp.Players == null) return;
+
+        var localPrefab = ResourceManager.Instance.LoadAsset<GameObject>("Assets/UnityTechnologies/SpaceRobotKyle/Prefabs/RobotKyle.prefab");
+        var remotePrefab = ResourceManager.Instance.LoadAsset<GameObject>("Assets/UnityTechnologies/SpaceRobotKyle/Prefabs/RobotKyle 1.prefab");
+        if (localPrefab == null || remotePrefab == null)
         {
-            AddLog($"[Game] Failed to load player prefab: {prefabPath}");
+            AddLog($"[Game] Failed to load player prefab");
             return;
         }
-        _localCharacter = Instantiate(prefab);
-        _localCharacter.name = $"Player_{_player.UserId}";
-        _spawnedObjects[_player.UserId] = _localCharacter;
-        AddLog($"[Game] Spawned local player: {_localCharacter.name}");
+
+        foreach (var p in resp.Players)
+        {
+            if (_spawnedObjects.ContainsKey(p.UserId))
+                continue;
+
+            var isLocal = p.UserId == _player.UserId;
+            var go = Instantiate(isLocal ? localPrefab : remotePrefab);
+            go.name = $"Player_{p.UserId}";
+            _spawnedObjects[p.UserId] = go;
+
+            if (isLocal)
+            {
+                _localCharacter = go;
+                _localAnimator = go.GetComponentInChildren<Animator>();
+            }
+            else
+            {
+                var input = go.GetComponent<StarterAssets.StarterAssetsInputs>();
+                if (input != null) input.cursorLocked = false;
+                var playerInput = go.GetComponent<UnityEngine.InputSystem.PlayerInput>();
+                if (playerInput != null) playerInput.enabled = false;
+            }
+        }
+        AddLog($"[Game] Spawned {resp.Players.Count} player(s) in room {resp.RoomId}");
     }
 
     static readonly Dictionary<string, string> PrefabPaths = new()
@@ -134,6 +187,7 @@ public class NetExample : MonoBehaviour
 
     void OnObjectDespawn(ObjectDespawnData data)
     {
+        _entityTargets.Remove(data.ObjectId);
         if (_spawnedObjects.TryGetValue(data.ObjectId, out var go))
         {
             Destroy(go);
@@ -143,12 +197,19 @@ public class NetExample : MonoBehaviour
 
     void OnEntitySync(EntitySyncData data)
     {
-        if (_spawnedObjects.TryGetValue(data.EntityId, out var go))
+        if (!_spawnedObjects.TryGetValue(data.EntityId, out var go) || go == null)
+            return;
+
+        _entityTargets[data.EntityId] = new EntitySyncTarget
         {
-            go.transform.SetPositionAndRotation(
-                new Vector3(data.PosX, data.PosY, data.PosZ),
-                Quaternion.Euler(data.RotX, data.RotY, data.RotZ));
-        }
+            Position = new Vector3(data.PosX, data.PosY, data.PosZ),
+            Rotation = Quaternion.Euler(data.RotX, data.RotY, data.RotZ),
+            AnimName = data.AnimName,
+            AnimTime = data.AnimNormalTime
+        };
+
+        ApplyAnimSync(go, data.AnimName, data.AnimNormalTime);
+        ApplyAnimParams(go, data.IntParams, data.FloatParams, data.BoolParams);
     }
 
     void SpawnPlayerCharacter(PlayerInfo playerInfo)
@@ -156,7 +217,7 @@ public class NetExample : MonoBehaviour
         if (_spawnedObjects.ContainsKey(playerInfo.UserId))
             return;
 
-        var path = PrefabPaths["RobotKyle"];
+        var path = "Assets/UnityTechnologies/SpaceRobotKyle/Prefabs/RobotKyle 1.prefab";
         var prefab = ResourceManager.Instance.LoadAsset<GameObject>(path);
         if (prefab == null)
         {
@@ -167,11 +228,16 @@ public class NetExample : MonoBehaviour
         var go = Instantiate(prefab);
         go.name = $"Player_{playerInfo.UserId}";
         _spawnedObjects[playerInfo.UserId] = go;
+        var input = go.GetComponent<StarterAssets.StarterAssetsInputs>();
+        if (input != null) input.cursorLocked = false;
+        var playerInput = go.GetComponent<UnityEngine.InputSystem.PlayerInput>();
+        if (playerInput != null) playerInput.enabled = false;
         AddLog($"[Game] Spawned player: {playerInfo.Nickname} (id={playerInfo.UserId})");
     }
 
     void DespawnPlayerCharacter(PlayerInfo playerInfo)
     {
+        _entityTargets.Remove(playerInfo.UserId);
         if (_spawnedObjects.TryGetValue(playerInfo.UserId, out var go))
         {
             Destroy(go);
@@ -188,9 +254,56 @@ public class NetExample : MonoBehaviour
                 Destroy(kv.Value);
         }
         _spawnedObjects.Clear();
+        _entityTargets.Clear();
         _localCharacter = null;
+        _localAnimator = null;
         AddLog("[Game] Cleared all game objects");
     }
+
+    void SendLocalEntitySync()
+    {
+        var t = _localCharacter.transform;
+        var pos = t.position;
+        var rot = t.eulerAngles;
+
+        var data = new EntitySyncData
+        {
+            EntityId = _player.UserId,
+            EntityType = 0,
+            PosX = pos.x,
+            PosY = pos.y,
+            PosZ = pos.z,
+            RotX = rot.x,
+            RotY = rot.y,
+            RotZ = rot.z
+        };
+
+        if (_localAnimator != null)
+        {
+            var stateInfo = _localAnimator.GetCurrentAnimatorStateInfo(0);
+            data.AnimName = stateInfo.fullPathHash.ToString();
+            data.AnimNormalTime = stateInfo.normalizedTime;
+
+            foreach (var p in _localAnimator.parameters)
+            {
+                switch (p.type)
+                {
+                    case AnimatorControllerParameterType.Int:
+                        data.IntParams[p.nameHash] = _localAnimator.GetInteger(p.nameHash);
+                        break;
+                    case AnimatorControllerParameterType.Float:
+                        data.FloatParams[p.nameHash] = _localAnimator.GetFloat(p.nameHash);
+                        break;
+                    case AnimatorControllerParameterType.Bool:
+                        data.BoolParams[p.nameHash] = _localAnimator.GetBool(p.nameHash);
+                        break;
+                }
+            }
+        }
+
+        _gameClient.SendEntitySync(data);
+    }
+
 
     void OnGUI()
     {
@@ -353,5 +466,46 @@ public class NetExample : MonoBehaviour
         }
 
         GUI.EndScrollView();
+    }
+
+    struct EntitySyncTarget
+    {
+        public Vector3 Position;
+        public Quaternion Rotation;
+        public string AnimName;
+        public float AnimTime;
+    }
+
+    void ApplyAnimSync(GameObject go, string animName, float animTime)
+    {
+        return;
+        if (string.IsNullOrEmpty(animName))
+            return;
+        var animator = go.GetComponent<Animator>();
+        if (animator == null || animator.runtimeAnimatorController == null)
+            return;
+
+        int hash = int.Parse(animName);
+
+        var state = animator.GetCurrentAnimatorStateInfo(0);
+        bool sameAnim = state.shortNameHash == hash;
+        if (sameAnim)
+            return;
+
+        animator.Play(hash, 0, animTime);
+    }
+
+    void ApplyAnimParams(GameObject go, Dictionary<int, int> intParams, Dictionary<int, float> floatParams, Dictionary<int, bool> boolParams)
+    {
+        var animator = go.GetComponent<Animator>();
+        if (animator == null)
+            return;
+
+        foreach (var kv in intParams)
+            animator.SetInteger(kv.Key, kv.Value);
+        foreach (var kv in floatParams)
+            animator.SetFloat(kv.Key, kv.Value);
+        foreach (var kv in boolParams)
+            animator.SetBool(kv.Key, kv.Value);
     }
 }

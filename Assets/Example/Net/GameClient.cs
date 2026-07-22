@@ -8,7 +8,7 @@ using SharedLib.Protocol;
 public class GameClient
 {
     public event Action<string> OnLog;
-    public event Action OnJoinedGame;
+    public event Action<JoinGameResponse> OnJoinedGame;
     public event Action OnLeftGame;
     public event Action<PlayerInfo> OnPlayerJoinedGame;
     public event Action<PlayerInfo> OnPlayerLeftGame;
@@ -140,8 +140,8 @@ public class GameClient
                     if (rc == ReturnCode.Success)
                     {
                         var resp = MessagePackSerializer.Deserialize<JoinGameResponse>(payload);
-                        Log($"[Game] JoinGameResponse OK, room={resp.RoomId}, owner={resp.OwnerUserId}");
-                        OnJoinedGame?.Invoke();
+                        Log($"[Game] JoinGameResponse OK, room={resp.RoomId}, owner={resp.OwnerUserId}, players={resp.Players?.Count ?? 0}");
+                        OnJoinedGame?.Invoke(resp);
                     }
                     else Log($"[Game] JoinGameResponse error: {rc}");
                     break;

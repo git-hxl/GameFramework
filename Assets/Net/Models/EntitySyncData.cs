@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using MessagePack;
 
 namespace SharedLib.Models
@@ -17,5 +18,8 @@ namespace SharedLib.Models
         [Key(8)] public float Speed { get; set; }
         [Key(9)] public string AnimName { get; set; } = string.Empty;
         [Key(10)] public float AnimNormalTime { get; set; }
+        [Key(11)] public Dictionary<int, int> IntParams { get; set; } = new();
+        [Key(12)] public Dictionary<int, float> FloatParams { get; set; } = new();
+        [Key(13)] public Dictionary<int, bool> BoolParams { get; set; } = new();
     }
 }

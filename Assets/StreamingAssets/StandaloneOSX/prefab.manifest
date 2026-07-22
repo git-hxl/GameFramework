@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 3992249239
+CRC: 2049195031
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: d0c59f8e59e4ccb81c2de598f8d434c7
+    Hash: a7437847efdd338dc47d9e8f09e4d490
   TypeTreeHash:
     serializedVersion: 2
     Hash: 9430699880f29d9df8a57b52f087d852
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: d0c59f8e59e4ccb81c2de598f8d434c7
+    Hash: a7437847efdd338dc47d9e8f09e4d490
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -152,5 +152,6 @@ SerializeReferenceClassIdentifiers:
 Assets:
 - Assets/UnityTechnologies/SpaceRobotKyle/Prefabs/RobotKyle.prefab
 - Assets/Example/UI/UITmp2.prefab
+- Assets/UnityTechnologies/SpaceRobotKyle/Prefabs/RobotKyle 1.prefab
 - Assets/Example/UI/UITmp.prefab
 Dependencies: []
