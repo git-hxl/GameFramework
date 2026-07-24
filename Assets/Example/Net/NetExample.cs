@@ -6,6 +6,7 @@ using UnityEngine;
 
 public class NetExample : MonoBehaviour
 {
+    public static GameClient GameClientInstance;
     const int ServerPort = 6001;
 
     LobbyClient _lobbyClient;
@@ -14,7 +15,6 @@ public class NetExample : MonoBehaviour
     PlayerInfo _player;
     GameObject _localCharacter;
     Dictionary<long, GameObject> _spawnedObjects = new();
-    Dictionary<long, EntitySyncTarget> _entityTargets = new();
     List<string> _logLines = new();
     string _inputText = "";
     Vector2 _scrollPos;
@@ -23,18 +23,7 @@ public class NetExample : MonoBehaviour
     string _gsAddress = "127.0.0.1";
     int _gsPort = 7001;
 
-    float _syncTimer;
     float _syncInterval = 0.1f;
-    Animator _localAnimator;
-
-    Vector3 _lastPos;
-    Quaternion _lastRot;
-
-    int _lastAnimHash;
-    float _lastAnimTime;
-    Dictionary<string, int> _lastIntParams = new();
-    Dictionary<string, float> _lastFloatParams = new();
-    Dictionary<string, bool> _lastBoolParams = new();
 
     void Awake()
     {
@@ -60,6 +49,7 @@ public class NetExample : MonoBehaviour
         };
 
         _gameClient = new GameClient();
+        GameClientInstance = _gameClient;
         _gameClient.OnLog += AddLog;
         _gameClient.OnJoinedGame += OnJoinedGameRoom;
         _gameClient.OnLeftGame += ClearAllGameObjects;
@@ -67,8 +57,6 @@ public class NetExample : MonoBehaviour
         _gameClient.OnPlayerLeftGame += DespawnPlayerCharacter;
         _gameClient.OnObjectSpawnReceived += OnObjectSpawn;
         _gameClient.OnObjectDespawnReceived += OnObjectDespawn;
-        _gameClient.OnPositionSyncReceived += OnPositionSync;
-        _gameClient.OnAnimationSyncReceived += OnAnimationSync;
     }
 
     void Start()
@@ -81,32 +69,6 @@ public class NetExample : MonoBehaviour
     {
         _lobbyClient.PollEvents();
         _gameClient.PollEvents();
-
-        float dt = Time.deltaTime;
-        if (_localCharacter != null)
-        {
-            _syncTimer += dt;
-            if (_syncTimer >= _syncInterval)
-            {
-                _syncTimer = 0f;
-                SendPositionSync();
-                SendAnimationSync();
-            }
-        }
-
-        float t = Mathf.Clamp01(dt / _syncInterval * 2f);
-        foreach (var kv in _entityTargets)
-        {
-            if (kv.Key == _player.UserId)
-                continue;
-            if (!_spawnedObjects.TryGetValue(kv.Key, out var go) || go == null)
-                continue;
-            var target = kv.Value;
-
-            float maxSpeed = Vector3.Distance(go.transform.position, target.Position) / _syncInterval;
-            go.transform.position = Vector3.MoveTowards(go.transform.position, target.Position, maxSpeed * dt);
-            go.transform.rotation = Quaternion.Slerp(go.transform.rotation, target.Rotation, t);
-        }
     }
 
     void OnDestroy()
@@ -147,10 +109,11 @@ public class NetExample : MonoBehaviour
             if (isLocal)
             {
                 _localCharacter = go;
-                _localAnimator = go.GetComponentInChildren<Animator>();
+                AddSyncComponents(go, p.UserId, true);
             }
             else
             {
+                AddSyncComponents(go, p.UserId, false);
                 var input = go.GetComponent<StarterAssets.StarterAssetsInputs>();
                 if (input != null) input.cursorLocked = false;
                 var playerInput = go.GetComponent<UnityEngine.InputSystem.PlayerInput>();
@@ -198,7 +161,6 @@ public class NetExample : MonoBehaviour
 
     void OnObjectDespawn(ObjectDespawnData data)
     {
-        _entityTargets.Remove(data.ObjectId);
         if (_spawnedObjects.TryGetValue(data.ObjectId, out var go))
         {
             Destroy(go);
@@ -206,30 +168,6 @@ public class NetExample : MonoBehaviour
         }
     }
 
-    void OnPositionSync(PositionSyncData data)
-    {
-        if (!_spawnedObjects.ContainsKey(data.EntityId))
-            return;
-
-        _entityTargets[data.EntityId] = new EntitySyncTarget
-        {
-            Position = new Vector3(data.PosX, data.PosY, data.PosZ),
-            Rotation = Quaternion.Euler(data.RotX, data.RotY, data.RotZ)
-        };
-
-        AddLog($"[Game] PositionSync: id={data.EntityId} pos=({data.PosX:F2},{data.PosY:F2},{data.PosZ:F2})");
-    }
-
-    void OnAnimationSync(AnimationSyncData data)
-    {
-        if (!_spawnedObjects.TryGetValue(data.EntityId, out var go) || go == null)
-            return;
-
-        ApplyAnimSync(go, data.AnimName, data.AnimNormalTime);
-        ApplyAnimParams(go, data.IntParams, data.FloatParams, data.BoolParams);
-
-        AddLog($"[Game] AnimationSync: id={data.EntityId} hash={data.AnimName} time={data.AnimNormalTime:F2}");
-    }
 
     void SpawnPlayerCharacter(PlayerInfo playerInfo)
     {
@@ -247,6 +185,7 @@ public class NetExample : MonoBehaviour
         var go = Instantiate(prefab);
         go.name = $"Player_{playerInfo.UserId}";
         _spawnedObjects[playerInfo.UserId] = go;
+        AddSyncComponents(go, playerInfo.UserId, false);
         var input = go.GetComponent<StarterAssets.StarterAssetsInputs>();
         if (input != null) input.cursorLocked = false;
         var playerInput = go.GetComponent<UnityEngine.InputSystem.PlayerInput>();
@@ -256,7 +195,6 @@ public class NetExample : MonoBehaviour
 
     void DespawnPlayerCharacter(PlayerInfo playerInfo)
     {
-        _entityTargets.Remove(playerInfo.UserId);
         if (_spawnedObjects.TryGetValue(playerInfo.UserId, out var go))
         {
             Destroy(go);
@@ -273,120 +211,22 @@ public class NetExample : MonoBehaviour
                 Destroy(kv.Value);
         }
         _spawnedObjects.Clear();
-        _entityTargets.Clear();
         _localCharacter = null;
-        _localAnimator = null;
         AddLog("[Game] Cleared all game objects");
     }
 
-    void SendPositionSync()
+    void AddSyncComponents(GameObject go, long entityId, bool isLocal)
     {
-        var t = _localCharacter.transform;
-        var pos = t.position;
-        var rot = t.rotation;
+        var pos = go.AddComponent<PositionSyncComponent>();
+        pos.EntityId = entityId;
+        pos.IsLocal = isLocal;
+        pos.SyncInterval = _syncInterval;
 
-        if (Vector3.Distance(pos, _lastPos) < 0.001f && Quaternion.Angle(rot, _lastRot) < 0.1f)
-            return;
-
-        _lastPos = pos;
-        _lastRot = rot;
-
-        var angles = rot.eulerAngles;
-        var data = new PositionSyncData
-        {
-            EntityId = _player.UserId,
-            EntityType = 0,
-            PosX = pos.x,
-            PosY = pos.y,
-            PosZ = pos.z,
-            RotX = angles.x,
-            RotY = angles.y,
-            RotZ = angles.z
-        };
-
-        _gameClient.SendPositionSync(data);
+        var anim = go.AddComponent<AnimationSyncComponent>();
+        anim.EntityId = entityId;
+        anim.IsLocal = isLocal;
+        anim.SyncInterval = _syncInterval;
     }
-
-    void SendAnimationSync()
-    {
-        if (_localAnimator == null)
-            return;
-
-        var stateInfo = _localAnimator.GetCurrentAnimatorStateInfo(0);
-        int hash = stateInfo.fullPathHash;
-        float time = stateInfo.normalizedTime;
-
-        if (hash == _lastAnimHash)
-        {
-            bool changed = false;
-            foreach (var p in _localAnimator.parameters)
-                changed |= HasParamChanged(p);
-            if (!changed)
-                return;
-        }
-
-        _lastAnimHash = hash;
-        _lastAnimTime = time;
-
-        var data = new AnimationSyncData
-        {
-            EntityId = _player.UserId,
-            AnimName = hash.ToString(),
-            AnimNormalTime = time,
-
-            IntParams = new Dictionary<string, int>(),
-            FloatParams = new Dictionary<string, float>(),
-            BoolParams = new Dictionary<string, bool>(),
-        };
-
-        foreach (var p in _localAnimator.parameters)
-        {
-            switch (p.type)
-            {
-                case AnimatorControllerParameterType.Int:
-                    var iv = _localAnimator.GetInteger(p.nameHash);
-                    _lastIntParams[p.name] = iv;
-                    data.IntParams[p.name] = iv;
-                    break;
-                case AnimatorControllerParameterType.Float:
-                    var fv = _localAnimator.GetFloat(p.nameHash);
-                    _lastFloatParams[p.name] = fv;
-                    data.FloatParams[p.name] = fv;
-                    break;
-                case AnimatorControllerParameterType.Bool:
-                    var bv = _localAnimator.GetBool(p.nameHash);
-                    _lastBoolParams[p.name] = bv;
-                    data.BoolParams[p.name] = bv;
-                    break;
-            }
-        }
-
-        _gameClient.SendAnimationSync(data);
-    }
-
-    bool HasParamChanged(AnimatorControllerParameter p)
-    {
-        switch (p.type)
-        {
-            case AnimatorControllerParameterType.Int:
-                var iv = _localAnimator.GetInteger(p.nameHash);
-                if (!_lastIntParams.TryGetValue(p.name, out var lastIv) || lastIv != iv)
-                    return true;
-                break;
-            case AnimatorControllerParameterType.Float:
-                var fv = _localAnimator.GetFloat(p.nameHash);
-                if (!_lastFloatParams.TryGetValue(p.name, out var lastFv) || Mathf.Abs(lastFv - fv) > 0.001f)
-                    return true;
-                break;
-            case AnimatorControllerParameterType.Bool:
-                var bv = _localAnimator.GetBool(p.nameHash);
-                if (!_lastBoolParams.TryGetValue(p.name, out var lastBv) || lastBv != bv)
-                    return true;
-                break;
-        }
-        return false;
-    }
-
 
     void OnGUI()
     {
@@ -562,41 +402,4 @@ public class NetExample : MonoBehaviour
         GUI.EndScrollView();
     }
 
-    struct EntitySyncTarget
-    {
-        public Vector3 Position;
-        public Quaternion Rotation;
-    }
-
-    void ApplyAnimSync(GameObject go, string animName, float animTime)
-    {
-        if (string.IsNullOrEmpty(animName))
-            return;
-        var animator = go.GetComponent<Animator>();
-        if (animator == null || animator.runtimeAnimatorController == null)
-            return;
-
-        int hash = int.Parse(animName);
-
-        var state = animator.GetCurrentAnimatorStateInfo(0);
-        bool sameAnim = state.fullPathHash == hash;
-        if (sameAnim)
-            return;
-
-        //animator.Play(hash);
-    }
-
-    void ApplyAnimParams(GameObject go, Dictionary<string, int> intParams, Dictionary<string, float> floatParams, Dictionary<string, bool> boolParams)
-    {
-        var animator = go.GetComponent<Animator>();
-        if (animator == null)
-            return;
-
-        foreach (var kv in intParams)
-            animator.SetInteger(kv.Key, kv.Value);
-        foreach (var kv in floatParams)
-            animator.SetFloat(kv.Key, kv.Value);
-        foreach (var kv in boolParams)
-            animator.SetBool(kv.Key, kv.Value);
-    }
 }
