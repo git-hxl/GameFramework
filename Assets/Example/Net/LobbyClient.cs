@@ -11,6 +11,9 @@ public class LobbyClient
 
     public bool IsConnected => _peer != null;
 
+    public int Ping => _peer?.Ping ?? 0;
+    public int Mtu => _peer?.Mtu ?? 0;
+
     const string ConnectionKey = "Game@wasd9527";
 
     EventBasedNetListener _listener;

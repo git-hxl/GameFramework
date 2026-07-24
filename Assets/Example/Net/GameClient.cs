@@ -14,9 +14,13 @@ public class GameClient
     public event Action<PlayerInfo> OnPlayerLeftGame;
     public event Action<ObjectSpawnData> OnObjectSpawnReceived;
     public event Action<ObjectDespawnData> OnObjectDespawnReceived;
-    public event Action<EntitySyncData> OnEntitySyncReceived;
+    public event Action<PositionSyncData> OnPositionSyncReceived;
+    public event Action<AnimationSyncData> OnAnimationSyncReceived;
 
     public bool IsConnected => _peer != null;
+
+    public int Ping => _peer?.Ping ?? 0;
+    public int Mtu => _peer?.Mtu ?? 0;
 
     const string ConnectionKey = "Game@wasd9527";
 
@@ -112,9 +116,14 @@ public class GameClient
         Log("[Game] -> LeaveGame");
     }
 
-    public void SendEntitySync(EntitySyncData data)
+    public void SendPositionSync(PositionSyncData data)
     {
-        Send(MessageIds.EntitySync, MessagePackSerializer.Serialize(data));
+        Send(MessageIds.PositionSync, MessagePackSerializer.Serialize(data));
+    }
+
+    public void SendAnimationSync(AnimationSyncData data)
+    {
+        Send(MessageIds.AnimationSync, MessagePackSerializer.Serialize(data));
     }
 
     public void SendObjectSpawn(ObjectSpawnData data)
@@ -168,10 +177,14 @@ public class GameClient
                     OnPlayerLeftGame?.Invoke(new PlayerInfo { UserId = leaveNotify.UserId });
                     break;
 
-                case MessageIds.EntitySync:
-                    var sync = MessagePackSerializer.Deserialize<EntitySyncData>(payload);
-                    Log($"[Game] EntitySync: id={sync.EntityId}, pos=({sync.PosX:F1},{sync.PosY:F1},{sync.PosZ:F1}), anim={sync.AnimName}");
-                    OnEntitySyncReceived?.Invoke(sync);
+                case MessageIds.PositionSync:
+                    var posSync = MessagePackSerializer.Deserialize<PositionSyncData>(payload);
+                    OnPositionSyncReceived?.Invoke(posSync);
+                    break;
+
+                case MessageIds.AnimationSync:
+                    var animSync = MessagePackSerializer.Deserialize<AnimationSyncData>(payload);
+                    OnAnimationSyncReceived?.Invoke(animSync);
                     break;
 
                 case MessageIds.ObjectSpawn:

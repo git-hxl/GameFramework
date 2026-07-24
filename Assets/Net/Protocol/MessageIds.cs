@@ -36,8 +36,9 @@ namespace SharedLib.Protocol
         public const ushort LeaveGameNotify = 33;
 
         // 同步
-        public const ushort EntitySync = 40;
-        public const ushort ObjectSpawn = 41;
-        public const ushort ObjectDespawn = 42;
+        public const ushort PositionSync = 40;
+        public const ushort AnimationSync = 41;
+        public const ushort ObjectSpawn = 42;
+        public const ushort ObjectDespawn = 43;
     }
 }
