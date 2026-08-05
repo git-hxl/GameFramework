@@ -369,6 +369,7 @@ public class NetExample : MonoBehaviour
         GUI.Label(new Rect(gsX, y, 170, 20), $"Sync: {_syncInterval * 1000:F0}ms");
         y += 18;
         _syncInterval = Mathf.Round(GUI.HorizontalSlider(new Rect(gsX, y, btnW, 20), _syncInterval, 0.02f, 0.5f) * 100f) / 100f;
+        y += btnH + 3;
 
         // ── Log Area ──
 

@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using SharedLib.Models;
 using UnityEngine;
 
@@ -13,10 +12,9 @@ public class AnimationSyncComponent : MonoBehaviour
     Animator _animator;
 
     int _lastAnimHash;
-    float _lastAnimTime;
-    Dictionary<string, int> _lastIntParams = new();
-    Dictionary<string, float> _lastFloatParams = new();
-    Dictionary<string, bool> _lastBoolParams = new();
+    System.Collections.Generic.Dictionary<string, int> _lastIntParams = new();
+    System.Collections.Generic.Dictionary<string, float> _lastFloatParams = new();
+    System.Collections.Generic.Dictionary<string, bool> _lastBoolParams = new();
 
     GameClient _client;
 
@@ -39,13 +37,14 @@ public class AnimationSyncComponent : MonoBehaviour
     void Update()
     {
         if (_client == null || _animator == null) return;
-        if (!IsLocal) return;
 
-        _timer += Time.deltaTime;
-        if (_timer < SyncInterval) return;
-        _timer = 0f;
-
-        SendSync();
+        if (IsLocal)
+        {
+            _timer += Time.deltaTime;
+            if (_timer < SyncInterval) return;
+            _timer = 0f;
+            SendSync();
+        }
     }
 
     void SendSync()
@@ -54,20 +53,19 @@ public class AnimationSyncComponent : MonoBehaviour
         int hash = stateInfo.fullPathHash;
         float time = stateInfo.normalizedTime;
 
-        if (hash == _lastAnimHash && Mathf.Abs(time - _lastAnimTime) < 0.01f && !HasParamChanged())
+        if (hash == _lastAnimHash && !HasParamChanged())
             return;
 
         _lastAnimHash = hash;
-        _lastAnimTime = time;
 
         var data = new AnimationSyncData
         {
             EntityId = EntityId,
             AnimName = hash.ToString(),
             AnimNormalTime = time,
-            IntParams = new Dictionary<string, int>(),
-            FloatParams = new Dictionary<string, float>(),
-            BoolParams = new Dictionary<string, bool>()
+            IntParams = new System.Collections.Generic.Dictionary<string, int>(),
+            FloatParams = new System.Collections.Generic.Dictionary<string, float>(),
+            BoolParams = new System.Collections.Generic.Dictionary<string, bool>()
         };
 
         foreach (var p in _animator.parameters)
@@ -122,24 +120,10 @@ public class AnimationSyncComponent : MonoBehaviour
     {
         if (data.EntityId != EntityId) return;
 
-        ApplyAnimSync(data.AnimName, data.AnimNormalTime);
         ApplyAnimParams(data.IntParams, data.FloatParams, data.BoolParams);
     }
 
-    void ApplyAnimSync(string animName, float animTime)
-    {
-        if (string.IsNullOrEmpty(animName) || _animator == null || _animator.runtimeAnimatorController == null)
-            return;
-
-        int hash = int.Parse(animName);
-        var state = _animator.GetCurrentAnimatorStateInfo(0);
-        if (state.fullPathHash == hash)
-            return;
-
-        //_animator.CrossFade(hash, 0.05f, 0);
-    }
-
-    void ApplyAnimParams(Dictionary<string, int> intParams, Dictionary<string, float> floatParams, Dictionary<string, bool> boolParams)
+    void ApplyAnimParams(System.Collections.Generic.Dictionary<string, int> intParams, System.Collections.Generic.Dictionary<string, float> floatParams, System.Collections.Generic.Dictionary<string, bool> boolParams)
     {
         foreach (var kv in intParams) _animator.SetInteger(kv.Key, kv.Value);
         foreach (var kv in floatParams) _animator.SetFloat(kv.Key, kv.Value);

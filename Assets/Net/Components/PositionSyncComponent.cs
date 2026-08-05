@@ -15,6 +15,7 @@ public class PositionSyncComponent : MonoBehaviour
     Vector3 _targetPos;
     Quaternion _targetRot;
     bool _hasTarget;
+
     GameClient _client;
 
     void Start()
@@ -38,8 +39,8 @@ public class PositionSyncComponent : MonoBehaviour
 
         if (IsLocal)
             UpdateSend();
-        else if (_hasTarget)
-            UpdateInterpolate();
+        else
+            UpdateReceive();
     }
 
     void UpdateSend()
@@ -81,8 +82,10 @@ public class PositionSyncComponent : MonoBehaviour
         _hasTarget = true;
     }
 
-    void UpdateInterpolate()
+    void UpdateReceive()
     {
+        if (!_hasTarget) return;
+
         float dt = Time.deltaTime;
         float maxSpeed = Vector3.Distance(transform.position, _targetPos) / SyncInterval;
         transform.position = Vector3.MoveTowards(transform.position, _targetPos, maxSpeed * dt);
