@@ -16,12 +16,12 @@ namespace GameFramework
         {
             btOpen.onClick.AddListener(() =>
             {
-                UIManager.Instance.OpenUI<UITmp>("Assets/GameFramework/Example/UI/UITmp.prefab");
+                UIManager.Instance.OpenUI<UITmp>("Assets/Example/UI/UITmp.prefab");
             });
 
             btClose.onClick.AddListener(() =>
             {
-                UIManager.Instance.CloseUI("Assets/GameFramework/Example/UI/UITmp.prefab");
+                UIManager.Instance.CloseUI("Assets/Example/UI/UITmp.prefab");
             });
 
 
